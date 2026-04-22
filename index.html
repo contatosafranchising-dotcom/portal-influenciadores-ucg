@@ -1,0 +1,1845 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S.A. Casa do Sushi – Portal de Influenciadoras</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#c8102e;--rl:#ff4d6d;--rdim:rgba(200,16,46,0.13);
+  --gold:#e8b86d;--gdim:rgba(232,184,109,0.13);
+  --bg:#080808;--s1:#111;--s2:#181818;--s3:#202020;
+  --bdr:rgba(255,255,255,0.07);--bdr2:rgba(255,255,255,0.12);
+  --txt:#f0ece6;--muted:rgba(240,236,230,0.38);--muted2:rgba(240,236,230,0.6);
+  --green:#2ecc71;--orange:#f39c12;--blue:#6495ed;
+  --r3:3px;--r4:4px;--r6:6px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+/* TOPBAR */
+.topbar{height:60px;background:var(--s1);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:50;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-j{font-family:'Noto Serif JP',serif;font-size:20px;color:var(--red);}
+.logo-txt{font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted);}
+.logo-txt span{color:var(--txt);}
+.top-accent{height:2px;background:linear-gradient(90deg,var(--red),var(--rl),var(--gold),var(--rl),var(--red));background-size:200%;animation:shimmer 4s linear infinite;}
+@keyframes shimmer{0%{background-position:0%}100%{background-position:200%}}
+
+/* NAV TABS */
+.nav{display:flex;background:var(--s1);border-bottom:1px solid var(--bdr);padding:0 28px;overflow-x:auto;gap:2px;}
+.ntab{display:flex;align-items:center;gap:7px;padding:14px 20px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;user-select:none;}
+.ntab:hover{color:var(--txt);}
+.ntab.active{color:var(--rl);border-color:var(--red);}
+.ntab .dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:0;}
+.ntab.active .dot{opacity:1;}
+
+/* PAGES */
+.page{display:none;padding:28px;max-width:1300px;animation:fadeIn .25s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* SECTION HEADER */
+.sec-head{margin-bottom:22px;}
+.sec-title{font-size:20px;font-weight:700;margin-bottom:4px;}
+.sec-sub{font-size:13px;color:var(--muted);}
+
+/* INFLUENCIADORA CARDS */
+.influ-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+.influ-card{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r6);padding:20px;cursor:pointer;transition:all .22s;position:relative;overflow:hidden;}
+.influ-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--rdim),transparent);opacity:0;transition:opacity .22s;}
+.influ-card:hover{border-color:rgba(200,16,46,.35);transform:translateY(-2px);}
+.influ-card:hover::before{opacity:1;}
+.influ-card.bloqueada{border-color:rgba(243,156,18,.25);background:rgba(243,156,18,.04);}
+.influ-card.bloqueada::before{background:linear-gradient(135deg,rgba(243,156,18,.08),transparent);}
+.ic-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;}
+.ic-avatar{width:42px;height:42px;border-radius:50%;background:var(--rdim);border:1px solid rgba(200,16,46,.3);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--rl);flex-shrink:0;}
+.ic-status{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 9px;border-radius:2px;}
+.st-postou{background:rgba(46,204,113,.15);color:var(--green);}
+.st-pendente{background:rgba(240,236,230,.07);color:var(--muted2);}
+.st-agendado{background:rgba(200,16,46,.15);color:var(--rl);}
+.st-bloqueada{background:rgba(243,156,18,.15);color:var(--orange);}
+.ic-nome{font-size:14px;font-weight:700;margin-bottom:3px;line-height:1.3;}
+.ic-redes{font-size:11px;color:var(--muted);margin-bottom:12px;}
+.ic-cupom{display:inline-flex;align-items:center;gap:5px;background:var(--gdim);border:1px solid rgba(232,184,109,.2);border-radius:2px;padding:3px 9px;font-size:11px;font-weight:700;color:var(--gold);margin-bottom:12px;}
+.ic-countdown{border-top:1px solid var(--bdr);padding-top:12px;margin-top:2px;}
+.ic-countdown-label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.ic-countdown-val{font-size:22px;font-weight:700;line-height:1;}
+.ic-countdown-val.ok{color:var(--green);}
+.ic-countdown-val.warn{color:var(--orange);}
+.ic-countdown-val.blocked{color:var(--orange);}
+.ic-countdown-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* BADGE REGIÃO */
+.rb{display:inline-flex;padding:2px 8px;border-radius:2px;font-size:10px;font-weight:700;letter-spacing:1px;}
+.rb-cwb{background:rgba(100,149,237,.15);color:var(--blue);}
+.rb-fln{background:rgba(46,204,113,.12);color:var(--green);}
+.rb-other{background:rgba(255,165,0,.12);color:#ffa500;}
+
+/* MODAL OVERLAY */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:center;justify-content:center;padding:16px;}
+.overlay.open{display:flex;}
+.modal{background:var(--s1);border:1px solid var(--bdr2);border-radius:10px;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;animation:slideUp .25s ease;}
+@keyframes slideUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+.mhead{padding:22px 24px 18px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:flex-start;}
+.mclose{background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;line-height:1;padding:0;}
+.mclose:hover{color:var(--txt);}
+.mbody{padding:22px 24px;}
+.mfoot{padding:14px 24px 22px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--bdr);}
+
+/* PROFILE MODAL */
+.prof-header{display:flex;align-items:center;gap:16px;margin-bottom:20px;}
+.prof-av{width:56px;height:56px;border-radius:50%;background:var(--rdim);border:2px solid rgba(200,16,46,.3);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:var(--rl);flex-shrink:0;}
+.prof-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+.pf-item{background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r4);padding:10px 12px;}
+.pf-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:3px;}
+.pf-val{font-size:13px;color:var(--txt);}
+.posts-section{margin-top:18px;}
+.post-item{display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r4);padding:11px 14px;margin-bottom:8px;}
+.post-icon{font-size:20px;}
+.post-info{flex:1;min-width:0;}
+.post-date{font-size:11px;color:var(--muted);}
+.post-link{font-size:12px;color:var(--rl);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.no-posts{text-align:center;padding:30px;color:var(--muted);font-size:13px;}
+
+/* AGENDAR */
+.cidades-row{display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap;}
+.cidade-btn{padding:9px 22px;border-radius:var(--r4);border:1px solid var(--bdr2);background:var(--s2);color:var(--muted2);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Sora',sans-serif;}
+.cidade-btn:hover{border-color:rgba(200,16,46,.4);color:var(--txt);}
+.cidade-btn.active{background:var(--red);border-color:var(--red);color:#fff;}
+
+.lojas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
+.loja-sel{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r6);padding:16px;cursor:pointer;transition:all .2s;}
+.loja-sel:hover{border-color:rgba(200,16,46,.4);background:var(--s2);}
+.loja-sel.selected{border-color:var(--red);background:var(--rdim);}
+.loja-sel-name{font-size:14px;font-weight:700;margin-bottom:4px;}
+.loja-sel-end{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:8px;}
+.loja-sel-wpp{font-size:11px;color:var(--green);}
+
+/* FORM AGENDAMENTO */
+.ag-form{background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r6);padding:20px;margin-top:18px;}
+.ag-form h3{font-size:13px;font-weight:700;letter-spacing:1px;color:var(--gold);margin-bottom:16px;text-transform:uppercase;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-full{grid-column:1/-1;}
+.fi{display:flex;flex-direction:column;gap:5px;}
+.fi label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+.fi input,.fi select,.fi textarea{background:var(--s3);border:1px solid var(--bdr);border-radius:var(--r3);color:var(--txt);font-size:13px;font-family:'Sora',sans-serif;padding:9px 12px;outline:none;transition:border .2s;}
+.fi input:focus,.fi select:focus,.fi textarea:focus{border-color:rgba(200,16,46,.5);}
+.fi select option{background:var(--s3);}
+.fi textarea{resize:vertical;min-height:60px;}
+
+.wpp-box{background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r4);padding:12px;font-size:12px;color:var(--muted2);line-height:1.7;white-space:pre-wrap;margin-top:8px;max-height:180px;overflow-y:auto;}
+
+/* PEDIDOS PENDENTES */
+.pend-card{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r6);padding:16px;margin-bottom:10px;}
+.pend-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+.pend-nome{font-size:14px;font-weight:700;}
+.pend-info{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6;}
+.pend-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* CONTEUDOS */
+.cont-form{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r6);padding:22px;margin-bottom:24px;}
+.cont-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+.cont-card{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r6);padding:16px;transition:border-color .2s;}
+.cont-card:hover{border-color:rgba(200,16,46,.3);}
+.cont-nome{font-size:13px;font-weight:700;margin-bottom:4px;}
+.cont-date{font-size:11px;color:var(--muted);margin-bottom:8px;}
+.cont-link{font-size:12px;color:var(--rl);word-break:break-all;}
+
+/* BUTTONS */
+.btn{padding:9px 18px;border-radius:var(--r3);font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:'Sora',sans-serif;transition:all .2s;letter-spacing:.3px;display:inline-flex;align-items:center;gap:6px;}
+.btn-red{background:var(--red);color:#fff;}.btn-red:hover{background:var(--rl);}
+.btn-ghost{background:transparent;color:var(--muted2);border:1px solid var(--bdr2);}.btn-ghost:hover{color:var(--txt);border-color:var(--bdr2);}
+.btn-green{background:rgba(46,204,113,.15);color:var(--green);border:1px solid rgba(46,204,113,.3);}
+.btn-wpp{background:#25d366;color:#fff;}.btn-wpp:hover{background:#1ebe5d;}
+.btn-orange{background:rgba(243,156,18,.15);color:var(--orange);border:1px solid rgba(243,156,18,.3);}
+.btn-gold{background:rgba(232,184,109,.15);color:var(--gold);border:1px solid rgba(232,184,109,.3);}
+.btn-sm{padding:5px 11px;font-size:11px;}
+
+/* NOTIF */
+.notif{position:fixed;bottom:22px;right:22px;background:var(--s1);border:1px solid var(--bdr2);border-left:3px solid var(--green);border-radius:var(--r4);padding:13px 18px;font-size:13px;font-weight:600;color:var(--txt);z-index:999;transform:translateX(130%);transition:transform .3s;max-width:300px;}
+.notif.show{transform:translateX(0);}
+
+/* EMPTY */
+.empty{text-align:center;padding:50px 20px;color:var(--muted);}
+.empty .ic{font-size:42px;margin-bottom:10px;}
+.empty p{font-size:14px;}
+
+/* BLOQUEIO BANNER */
+.block-banner{background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.25);border-radius:var(--r4);padding:12px 16px;font-size:13px;color:var(--orange);margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+
+/* DIVIDER */
+.divider{border:none;border-top:1px solid var(--bdr);margin:20px 0;}
+
+@media(max-width:700px){
+  .page{padding:16px;}
+  .nav{padding:0 12px;}
+  .topbar{padding:0 14px;}
+  .form-grid{grid-template-columns:1fr;}
+  .prof-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<div class="top-accent"></div>
+<div class="topbar">
+  <div class="logo">
+    <span class="logo-j">寿司</span>
+    <div>
+      <div style="font-size:14px;font-weight:700">S.A. Casa do Sushi</div>
+      <div class="logo-txt">Portal <span>Influenciadoras</span></div>
+    </div>
+  </div>
+  <div style="text-align:right">
+    <div style="font-size:11px;color:var(--muted)">UGC · Campanha 2026</div>
+    <div id="sync-indicator" style="font-size:10px;color:var(--muted);margin-top:2px;cursor:pointer" onclick="syncNow()" title="Clique para sincronizar">💾 Dados locais</div>
+  </div>
+</div>
+
+<div class="nav" id="nav">
+  <div class="ntab active" onclick="goPage('influenciadoras',this)"><span class="dot"></span>👥 Influenciadoras</div>
+  <div class="ntab" onclick="goPage('agendar',this)"><span class="dot"></span>📅 Agendar Pedido</div>
+  <div class="ntab" onclick="goPage('conteudos',this)"><span class="dot"></span>📸 Conteúdos Postados</div>
+  <div class="ntab" onclick="goPage('resultados',this)"><span class="dot"></span>📊 Resultados</div>
+  <div class="ntab" onclick="goPage('admin',this)"><span class="dot"></span>⚙️ Admin</div>
+</div>
+
+<!-- ===== PAGE: INFLUENCIADORAS ===== -->
+<div class="page active" id="page-influenciadoras">
+  <div class="sec-head">
+    <div class="sec-title">👥 Influenciadoras</div>
+    <div class="sec-sub">Clique em uma influenciadora para ver seu perfil completo e histórico de posts</div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;">
+    <button class="btn btn-ghost btn-sm" id="fi-todas" onclick="filtrarInflu('todas',this)">Todas</button>
+    <button class="btn btn-ghost btn-sm" id="fi-cwb" onclick="filtrarInflu('cwb',this)">📍 Curitiba</button>
+    <button class="btn btn-ghost btn-sm" id="fi-fln" onclick="filtrarInflu('fln',this)">📍 Florianópolis</button>
+  </div>
+  <div class="influ-grid" id="influ-grid"></div>
+</div>
+
+<!-- ===== PAGE: AGENDAR PEDIDO ===== -->
+<div class="page" id="page-agendar">
+  <div class="sec-head">
+    <div class="sec-title">📅 Agendar Pedido</div>
+    <div class="sec-sub">Selecione sua cidade e a loja onde deseja fazer o pedido</div>
+  </div>
+
+  <!-- BLOCO: Pedidos Pendentes de Confirmação -->
+  <div id="pend-section" style="margin-bottom:28px;display:none">
+    <div style="font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--orange);margin-bottom:12px">⏳ Aguardando Confirmação de Recebimento</div>
+    <div id="pend-list"></div>
+  </div>
+
+  <div id="bloqueio-banner" class="block-banner" style="display:none">
+    🔒 <span id="bloqueio-msg"></span>
+  </div>
+
+  <div class="cidades-row" id="cidades-row">
+    <button class="cidade-btn active" onclick="selecionarCidade('cwb',this)">📍 Curitiba & Região</button>
+    <button class="cidade-btn" onclick="selecionarCidade('fln',this)">📍 Florianópolis / SC</button>
+  </div>
+  <div id="cidades-extra"></div>
+
+  <div class="lojas-grid" id="lojas-grid"></div>
+
+  <div class="ag-form" id="ag-form" style="display:none">
+    <h3 id="ag-form-title">📋 Dados do Agendamento</h3>
+    <div class="form-grid">
+      <div class="fi form-full">
+        <label>Seu nome (influenciadora)</label>
+        <select id="ag-influencer" onchange="updAg()">
+          <option value="">Selecione seu nome...</option>
+        </select>
+      </div>
+      <div class="fi">
+        <label>Data do pedido</label>
+        <input type="date" id="ag-data" onchange="updAg()">
+      </div>
+      <div class="fi">
+        <label>Horário desejado</label>
+        <input type="time" id="ag-hora" value="19:00" onchange="updAg()">
+      </div>
+      <div class="fi form-full">
+        <label>Endereço de entrega</label>
+        <input type="text" id="ag-end" placeholder="Rua, número, bairro, cidade" oninput="updAg()">
+      </div>
+      <div class="fi form-full" id="wpp-preview-wrap" style="display:none">
+        <label>Mensagem automática para a loja</label>
+        <div class="wpp-box" id="wpp-preview-txt"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+      <button class="btn btn-wpp" id="btn-enviar-wpp" style="display:none">💬 Enviar pelo WhatsApp</button>
+      <button class="btn btn-red" id="btn-confirmar-ag" style="display:none" onclick="confirmarAgendamento()">✅ Confirmar Agendamento</button>
+      <button class="btn btn-ghost" onclick="cancelarAg()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: CONTEÚDOS ===== -->
+<div class="page" id="page-conteudos">
+  <div class="sec-head">
+    <div class="sec-title">📸 Conteúdos Postados</div>
+    <div class="sec-sub">Registre aqui o link da sua postagem para validar sua participação</div>
+  </div>
+
+  <div class="cont-form">
+    <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:14px">➕ Adicionar Conteúdo</div>
+    <div class="form-grid">
+      <div class="fi">
+        <label>Seu nome</label>
+        <select id="cont-nome">
+          <option value="">Selecione...</option>
+        </select>
+      </div>
+      <div class="fi">
+        <label>Plataforma</label>
+        <select id="cont-plat">
+          <option value="Instagram">📸 Instagram</option>
+          <option value="TikTok">🎵 TikTok</option>
+        </select>
+      </div>
+      <div class="fi form-full">
+        <label>Link da postagem</label>
+        <input type="url" id="cont-link" placeholder="https://instagram.com/p/... ou https://tiktok.com/...">
+      </div>
+      <div class="fi form-full">
+        <label>A loja aceitou a collab? (marcação no post)</label>
+        <select id="cont-collab">
+          <option value="">Ainda não solicitei / Não sei</option>
+          <option value="Aceita">✅ Sim, aceitou a collab</option>
+          <option value="Não aceita">❌ Não aceitou a collab</option>
+          <option value="Pendente">⏳ Aguardando resposta</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:14px;">
+      <button class="btn btn-red" onclick="addConteudo()">📤 Enviar Link</button>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+    <button class="btn btn-ghost btn-sm" onclick="filtrarConteudos('todos',this)" style="border-color:var(--rl);color:var(--rl)">Todos</button>
+    <button class="btn btn-ghost btn-sm" onclick="filtrarConteudos('cwb',this)">Curitiba</button>
+    <button class="btn btn-ghost btn-sm" onclick="filtrarConteudos('fln',this)">Florianópolis</button>
+  </div>
+
+  <div class="cont-grid" id="cont-grid"></div>
+</div>
+
+
+<!-- ===== PAGE: RESULTADOS ===== -->
+<div class="page" id="page-resultados">
+  <div class="sec-head">
+    <div class="sec-title">📊 Resultados de Vendas</div>
+    <div class="sec-sub">Acompanhe os números da campanha — atualizado semanalmente pela equipe</div>
+  </div>
+  <div id="res-semana-label" style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px"></div>
+  <!-- RANKING CARDS -->
+  <div style="font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:12px">🏆 Ranking da Campanha</div>
+  <div id="res-ranking" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:28px"></div>
+  <!-- TABELA COMPLETA -->
+  <div style="font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Detalhamento por semana</div>
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr>
+        <th style="text-align:left;padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Influenciadora</th>
+        <th style="text-align:left;padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Região</th>
+        <th style="text-align:left;padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Semana</th>
+        <th style="text-align:left;padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Pedidos</th>
+        <th style="text-align:left;padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Total</th>
+        <th style="text-align:left;padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Ticket Médio</th>
+      </tr></thead>
+      <tbody id="res-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ===== PAGE: ADMIN ===== -->
+<div class="page" id="page-admin">
+  <div class="sec-head">
+    <div class="sec-title">⚙️ Admin</div>
+    <div class="sec-sub">Gestão interna — equipe de marketing</div>
+  </div>
+
+  <!-- ADMIN SUB TABS -->
+  <div style="display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap" id="admin-subtabs">
+    <button class="btn btn-red btn-sm" onclick="showAdminTab('cadastros',this)">➕ Cadastros</button>
+    <button class="btn btn-ghost btn-sm" onclick="showAdminTab('vendas-imp',this)">💰 Importar Vendas</button>
+    <button class="btn btn-ghost btn-sm" onclick="showAdminTab('gestao',this)">🗂 Gestão</button>
+  </div>
+
+  <!-- SUB: CADASTROS -->
+  <div id="admin-tab-cadastros">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:0" id="admin-stats"></div>
+    <hr style="border:none;border-top:1px solid var(--bdr);margin:22px 0">
+
+    <!-- NOVA INFLUENCIADORA -->
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r6);padding:20px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;color:var(--rl);margin-bottom:14px">👤 Adicionar Influenciadora</div>
+      <div class="form-grid">
+        <div class="fi"><label>Nome completo</label><input type="text" id="n-nome" placeholder="Nome completo"></div>
+        <div class="fi"><label>Região — ex: cwb, fln, ssz</label>
+          <input type="text" id="n-reg" list="regioes-list2" placeholder="cwb / fln / nova cidade...">
+          <datalist id="regioes-list2" id="regioes-list2"></datalist>
+        </div>
+        <div class="fi"><label>Instagram</label><input type="text" id="n-insta" placeholder="@usuário"></div>
+        <div class="fi"><label>TikTok</label><input type="text" id="n-tiktok" placeholder="@usuário"></div>
+        <div class="fi"><label>WhatsApp</label><input type="text" id="n-wpp" placeholder="(XX) 9XXXX-XXXX"></div>
+        <div class="fi"><label>Cupom</label><input type="text" id="n-cupom" placeholder="NOME10OFF"></div>
+        <div class="fi"><label>Seguidores Instagram</label><input type="text" id="n-qi" placeholder="Ex: 10 mil"></div>
+        <div class="fi"><label>Seguidores TikTok</label><input type="text" id="n-qt" placeholder="Ex: 5.200"></div>
+        <div class="fi"><label>CPF</label><input type="text" id="n-cpf" placeholder="000.000.000-00"></div>
+        <div class="fi"><label>E-mail</label><input type="email" id="n-email"></div>
+        <div class="fi"><label>PIX</label><input type="text" id="n-pix"></div>
+        <div class="fi"><label>Collab</label>
+          <select id="n-collab"><option value="">Não informado</option><option value="Aceita">Aceita</option><option value="Não aceita">Não aceita</option></select>
+        </div>
+      </div>
+      <div style="margin-top:14px"><button class="btn btn-red" onclick="addInflu()">➕ Adicionar Influenciadora</button></div>
+    </div>
+
+    <!-- GERENCIAR REGIÕES -->
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r6);padding:20px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;color:var(--rl);margin-bottom:14px">🗺️ Gerenciar Regiões</div>
+      <div class="form-grid">
+        <div class="fi">
+          <label>Código da região (curto, sem espaço)</label>
+          <input type="text" id="reg-cod" placeholder="Ex: sp, ldn, ssz, bsb">
+        </div>
+        <div class="fi">
+          <label>Nome completo para exibição</label>
+          <input type="text" id="reg-label" placeholder="Ex: São Paulo / SP, Londrina / PR">
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-red" onclick="addRegiao()">➕ Adicionar Região</button>
+        <span style="font-size:11px;color:var(--muted)">Após criar, aparece automaticamente em Agendar Pedido</span>
+      </div>
+      <div id="regioes-lista" style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"></div>
+    </div>
+
+    <!-- NOVA LOJA -->
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r6);padding:20px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:14px">📍 Adicionar Loja</div>
+      <div class="form-grid">
+        <div class="fi"><label>ID único (sem espaço)</label><input type="text" id="l-id" placeholder="ex: novaunidade"></div>
+        <div class="fi"><label>Nome da loja</label><input type="text" id="l-nome" placeholder="Ex: Nova Unidade"></div>
+        <div class="fi"><label>Região (código) — ex: cwb, fln, ssz</label>
+          <input type="text" id="l-reg" list="regioes-list" placeholder="cwb / fln / nova cidade...">
+          <datalist id="regioes-list">
+            <option value="cwb">Curitiba & Região</option>
+            <option value="fln">Florianópolis / SC</option>
+          </datalist>
+        </div>
+        <div class="fi"><label>Nome da cidade/região (exibição)</label>
+          <input type="text" id="l-reg-label" placeholder="Ex: Santos / SP, Londrina / PR">
+        </div>
+        <div class="fi"><label>Instagram</label><input type="text" id="l-ig" placeholder="@perfil"></div>
+        <div class="fi form-full"><label>Endereço completo</label><input type="text" id="l-end" placeholder="Rua, número, bairro, cidade - UF, CEP"></div>
+        <div class="fi"><label>WhatsApp</label><input type="text" id="l-wpp" placeholder="(XX) 9XXXX-XXXX"></div>
+        <div class="fi"><label>Link de pedido</label><input type="url" id="l-link" placeholder="https://delivery..."></div>
+      </div>
+      <div style="margin-top:14px"><button class="btn btn-gold" onclick="addLoja()">➕ Adicionar Loja</button></div>
+    </div>
+
+    <!-- LISTA INFLUENCIADORAS -->
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r6);padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--muted2)">👥 Influenciadoras Cadastradas</div>
+        <span id="influ-count" style="font-size:12px;color:var(--muted)"></span>
+      </div>
+      <div id="admin-influ-list" style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr>
+            <th style="text-align:left;padding:8px 10px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border-bottom:1px solid var(--bdr)">Nome</th>
+            <th style="text-align:left;padding:8px 10px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border-bottom:1px solid var(--bdr)">Região</th>
+            <th style="text-align:left;padding:8px 10px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border-bottom:1px solid var(--bdr)">Cupom</th>
+            <th style="text-align:left;padding:8px 10px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border-bottom:1px solid var(--bdr)">Instagram</th>
+            <th style="text-align:left;padding:8px 10px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border-bottom:1px solid var(--bdr)">Ação</th>
+          </tr></thead>
+          <tbody id="admin-influ-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUB: VENDAS -->
+  <div id="admin-tab-vendas-imp" style="display:none">
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r6);padding:20px;margin-bottom:22px">
+      <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:4px">💰 Importar Vendas Semanais</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Cole os dados (Nome | Pedidos | Valor) — tab, vírgula ou ponto-e-vírgula. Enviado 1× por semana pela equipe.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div class="fi"><label>Semana</label><input type="week" id="imp-sem" style="background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r3);color:var(--txt);font-size:13px;padding:8px 12px;outline:none;font-family:'Sora',sans-serif;"></div>
+        <div class="fi"><label>Campanha</label><input type="text" id="imp-camp" placeholder="UGC Abril 2026" style="background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r3);color:var(--txt);font-size:13px;padding:8px 12px;outline:none;font-family:'Sora',sans-serif;"></div>
+      </div>
+      <textarea id="imp-txt" style="width:100%;background:var(--s2);border:1px dashed rgba(255,255,255,.15);border-radius:var(--r3);color:var(--txt);font-size:12px;font-family:'Sora',sans-serif;padding:10px;outline:none;min-height:100px;resize:vertical" placeholder="Camila Muniz&#9;12&#9;1188.00&#10;Ana Dilay&#9;8&#9;792.00"></textarea>
+      <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-red" onclick="importVendas()">📥 Importar</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('imp-txt').value=''">Limpar</button>
+        <button class="btn btn-ghost" onclick="if(confirm('Limpar todo o histórico?')){vendas=[];saveAll();renderAdmin();showN('🗑 Histórico limpo');}">🗑 Limpar histórico</button>
+      </div>
+      <div id="imp-result" style="display:none;margin-top:10px;font-size:12px;color:var(--muted2);background:var(--s2);padding:10px;border-radius:var(--r3)"></div>
+    </div>
+    <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Histórico</div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr id="vthead"></tr></thead>
+        <tbody id="vtbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SUB: GESTÃO -->
+  <div id="admin-tab-gestao" style="display:none">
+    <div style="font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Agendamentos Ativos</div>
+    <div id="gestao-agend"></div>
+    <hr style="border:none;border-top:1px solid var(--bdr);margin:22px 0">
+    <div style="font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Lojas Cadastradas</div>
+    <div id="gestao-lojas" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px"></div>
+  </div>
+
+</div>
+
+
+<!-- MODAL: PERFIL INFLUENCIADORA -->
+<div class="overlay" id="modal-perfil">
+  <div class="modal">
+    <div class="mhead">
+      <div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--rl);margin-bottom:4px">PERFIL</div>
+        <h2 id="perf-nome" style="font-size:18px;font-weight:700;"></h2>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-perfil')">×</button>
+    </div>
+    <div class="mbody" id="perf-body"></div>
+    <div class="mfoot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-perfil')">Fechar</button>
+      <button class="btn btn-gold" id="perf-edit-btn" onclick="abrirEditarPerfil()">✏️ Editar</button>
+      <button class="btn btn-wpp" id="perf-wpp" style="display:none">💬 WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<!-- MODAL: EDITAR PERFIL -->
+<div class="overlay" id="modal-editar-perfil">
+  <div class="modal">
+    <div class="mhead">
+      <div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:4px">EDITAR</div>
+        <h2 id="edit-perf-titulo" style="font-size:16px;font-weight:700"></h2>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-editar-perfil')">×</button>
+    </div>
+    <div class="mb">
+      <input type="hidden" id="edit-perf-nome-original">
+      <div class="fg">
+        <div class="fst">📋 Dados Pessoais</div>
+        <div class="fi"><label>Nome completo</label><input type="text" id="ep-nome"></div>
+        <div class="fi"><label>Região</label>
+          <input type="text" id="ep-reg" list="regioes-list" placeholder="cwb / fln">
+        </div>
+        <div class="fi"><label>Instagram</label><input type="text" id="ep-insta" placeholder="@usuário"></div>
+        <div class="fi"><label>TikTok</label><input type="text" id="ep-tiktok" placeholder="@usuário"></div>
+        <div class="fi"><label>WhatsApp</label><input type="text" id="ep-wpp" placeholder="(XX) 9XXXX-XXXX"></div>
+        <div class="fi"><label>Cupom</label><input type="text" id="ep-cupom" placeholder="NOME10OFF"></div>
+        <div class="fi"><label>Seguidores Instagram</label><input type="text" id="ep-qi" placeholder="Ex: 10 mil"></div>
+        <div class="fi"><label>Seguidores TikTok</label><input type="text" id="ep-qt" placeholder="Ex: 5.200"></div>
+        <div class="fi"><label>CPF</label><input type="text" id="ep-cpf"></div>
+        <div class="fi"><label>E-mail</label><input type="email" id="ep-email"></div>
+        <div class="fi"><label>PIX</label><input type="text" id="ep-pix"></div>
+        <div class="fi"><label>Collab</label>
+          <select id="ep-collab">
+            <option value="">Não informado</option>
+            <option value="Aceita">Aceita</option>
+            <option value="Não aceita">Não aceita</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-editar-perfil')">Cancelar</button>
+      <button class="btn btn-red" onclick="salvarEdicaoPerfil()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== DATA ==========
+// Helper para classe e label de região
+function regiaoClass(r){
+  if(!r)return 'rb-other';
+  const rl=String(r).toLowerCase();
+  if(rl==='cwb')return 'rb-cwb';
+  if(rl==='fln')return 'rb-fln';
+  return 'rb-other';
+}
+function regiaoLabel(r){
+  if(!r)return '?';
+  return String(r).toUpperCase();
+}
+
+let LOJAS = [
+  {id:'colombo',n:'Colombo',r:'cwb',ig:'@sacasadosushicolombo',end:'R. Genésio Moreschi - Guaraituba, Colombo - PR, 83415-136',w:'(41) 98780-9629',l:'https://delivery.livn.com.br/sacolombo'},
+  {id:'merces',n:'Mercês',r:'cwb',ig:'@sacasadosushimerces',end:'R. Profa. Rosa Saporski, 151 - Mercês, Curitiba - PR, 80810-120',w:'(41) 99117-3763',l:'https://delivery.livn.com.br/sacasadosushicuritibamerces'},
+  {id:'cwb',n:'CWB Delivery',r:'cwb',ig:'@sacasadosushicwbdelivery',end:'R. Omilio Monteiro Soares, 1519 - Fanny, Curitiba - PR, 81030-001',w:'(41) 99191-1519',l:'https://link.vocepede.online/sacwbdelivery'},
+  {id:'sitiocercado',n:'Sítio Cercado',r:'cwb',ig:'@sacasadosushisitiocercado',end:'R. Professora Luíza Borges Fanini, 272 - Sítio Cercado, Curitiba - PR, 81925-210',w:'(41) 99624-9340',l:'https://delivery.livn.com.br/sasitiocercado'},
+  {id:'fazenda',n:'Fazenda Rio Grande',r:'cwb',ig:'@sacasadosushifazendariogrande',end:'Av. Brasil, 2057 - Nações, Fazenda Rio Grande - PR, 83820-065',w:'(41) 99847-6128',l:'https://delivery.livn.com.br/sacasadosushifazendariogrande'},
+  {id:'altoxv',n:'Alto da XV',r:'cwb',ig:'@sacasadosushialtodaxv',end:'R. Camões, 422 - Alto da XV, Curitiba - PR, 80050-290',w:'(41) 99561-1488',l:'https://delivery.livn.com.br/sa-alto-da-xv'},
+  {id:'santacandida',n:'Santa Cândida',r:'cwb',ig:'@sacasadosushisantacandida',end:'Av. Mal. Mascarenhas de Moraes, 944 - Atuba, Curitiba - PR, 82620-300',w:'(41) 98898-5675',l:'https://delivery.livn.com.br/sacasadosushisantacandida'},
+  {id:'saobraz',n:'São Braz',r:'cwb',ig:'@sacasadosushisaobraz',end:'Av. Três Marias, 182 - São Braz, Curitiba - PR, 82310-000',w:'(41) 98774-3195',l:'https://delivery.livn.com.br/sacasadosushisaobraz'},
+  {id:'araucaria',n:'Araucária',r:'cwb',ig:'@sacasadosushiaraucaria',end:'Av. Dr. Vítor do Amaral, 374 - Centro, Araucária - PR, 83702-040',w:'(41) 99898-3891',l:'https://delivery.livn.com.br/sacasadosushiaraucaria'},
+  {id:'pinhais',n:'Pinhais',r:'cwb',ig:'@sacasadosushipinhais',end:'Rua Reinaldo Ribas, 830, Atuba, Pinhais - PR',w:'(41) 98853-8224',l:'https://delivery.livn.com.br/sacasadosushipinhais'},
+  {id:'novomundo',n:'Novo Mundo',r:'cwb',ig:'@sacasadosushinovomundo',end:'R. Cap. Tenente Maris de Barros, 313 - Portão, Curitiba - PR',w:'(41) 99879-5881',l:'https://delivery.livn.com.br/sacasadosushinovomundo'},
+  {id:'saojose',n:'São José - SC',r:'fln',ig:'@sacasadosushisaojosesc',end:'Av. Salvador di Bernardi, 914 - Campinas, São José - SC, 88101-260',w:'(48) 98808-6457',l:'https://delivery.livn.com.br/sacasadosushisaojose'},
+];
+
+const INFLU_DEFAULT = [
+  {nome:'Camila Cristina Muniz',regiao:'cwb',insta:'@milamuniz.ugc',tiktok:'@milamuniz.ugc',wpp:'(41) 99853-7949',cupom:'MILA10OFF',qtInsta:'32,5 mil',qtTiktok:'31,5 mil',cpf:'080.491.839-20',email:'milamunizz@yahoo.com',pix:'50368961000121',collab:'Aceita'},
+  {nome:'Emanuella Santana Fontoura',regiao:'cwb',insta:'@manu.softtech',tiktok:'@manukck0',wpp:'(63) 99121-0378',cupom:'EMANU10OFF',qtInsta:'4.630',qtTiktok:'3.334',cpf:'066.547.321-46',email:'emanuella.kck@gmail.com',pix:'49204491000181',collab:''},
+  {nome:'Patrícia Martins Nadal',regiao:'cwb',insta:'@patinadal',tiktok:'',wpp:'(41) 99571-2075',cupom:'PAT10OFF',qtInsta:'5.689',qtTiktok:'',cpf:'051.983.269-84',email:'patriciamnadal@gmail.com',pix:'patriciamnadal@gmail.com',collab:''},
+  {nome:'Elo Mucke',regiao:'cwb',insta:'@euelomucke',tiktok:'@euelomucke',wpp:'(41) 98475-0197',cupom:'ELO10OFF',qtInsta:'1.787',qtTiktok:'402',cpf:'090.607.029-56',email:'contatoelomucke@gmail.com',pix:'090.607.029-56',collab:''},
+  {nome:'Susileid Batista',regiao:'cwb',insta:'@susisabadinoficial',tiktok:'',wpp:'(41) 98422-6767',cupom:'SUSI10OFF',qtInsta:'22,1 mil',qtTiktok:'',cpf:'038.786.849-67',email:'susisabadin@gmail.com',pix:'susisabadin@gmail.com',collab:''},
+  {nome:'Anna Carolina Piekarski',regiao:'cwb',insta:'@annacuritibana',tiktok:'',wpp:'(41) 99891-5567',cupom:'ANNA10OFF',qtInsta:'7.252',qtTiktok:'',cpf:'086.216.219-08',email:'annacpiekarski@gmail.com',pix:'086.216.219-08',collab:''},
+  {nome:'Ana Caroline Nunes Dilay',regiao:'cwb',insta:'@anadilay_',tiktok:'@anadilay_',wpp:'(41) 9756-2085',cupom:'ANA10OFF',qtInsta:'3.341',qtTiktok:'4.754',cpf:'100.443.009-48',email:'anadilay@icloud.com',pix:'anadilayugc.creator@gmail.com',collab:'Aceita'},
+  {nome:'Catharina Santos',regiao:'cwb',insta:'@_cathaah',tiktok:'@_cathaah',wpp:'(47) 99201-3238',cupom:'CATH10OFF',qtInsta:'13,1 mil',qtTiktok:'656',cpf:'081.242.539-19',email:'cathah@icloud.com',pix:'cathah@icloud.com',collab:''},
+  {nome:'Melissa Garcia',regiao:'cwb',insta:'@melissaa.garcia',tiktok:'@melissaa.garcia',wpp:'(41) 99700-2523',cupom:'MELI10OFF',qtInsta:'951',qtTiktok:'544',cpf:'090.187.149-41',email:'garcia.melissa@outlook.com.br',pix:'090.187.149-41',collab:'Não aceita'},
+  {nome:'Ana Flávia Lopes',regiao:'cwb',insta:'@_analopess',tiktok:'',wpp:'(41) 99655-1889',cupom:'FLAVIA10OFF',qtInsta:'8.529',qtTiktok:'',cpf:'096.968.839-35',email:'anslopes.videomaker@gmail.com',pix:'096.968.839-35',collab:''},
+  {nome:'Hellen Cris de Souza Antunes',regiao:'cwb',insta:'@hellencrisof',tiktok:'@hellencrisof',wpp:'(41) 99672-1776',cupom:'HELLEN10OFF',qtInsta:'9.553',qtTiktok:'9.996',cpf:'101.510.639-07',email:'contatohellencris@gmail.com',pix:'(41) 99672-1776',collab:''},
+  {nome:'Mylena do Nascimento',regiao:'cwb',insta:'@myleuna',tiktok:'@myleunapontocom',wpp:'(41) 98455-5674',cupom:'MYLENA10OFF',qtInsta:'11,7 mil',qtTiktok:'',cpf:'011.556.899-92',email:'myleuna@icloud.com',pix:'(41) 98455-5674',collab:'Aceita'},
+  {nome:'Ana Paula Cardoso',regiao:'fln',insta:'@anna_publicitaria',tiktok:'@anna_publicitaria',wpp:'(48) 99612-9881',cupom:'ANAPAULA10OFF',qtInsta:'97,9 mil',qtTiktok:'',cpf:'078.137.519-30',email:'pccardoso11@gmail.com',pix:'078.137.519-30',collab:''},
+  {nome:'Laura Alves dos Santos',regiao:'fln',insta:'@daily_da_lala2305',tiktok:'',wpp:'(48) 99676-8806',cupom:'LALA10OFF',qtInsta:'82,9 mil',qtTiktok:'',cpf:'145.080.519-10',email:'pccardoso11@gmail.com',pix:'078.137.519-30',collab:''},
+  {nome:'Laura Minussi Cogoy',regiao:'fln',insta:'@lauminussi_',tiktok:'@lauminussi_',wpp:'(55) 99669-5427',cupom:'LAUMINUSSI10OFF',qtInsta:'10 mil',qtTiktok:'573',cpf:'050.600.800-21',email:'lauraminussicogoy@gmail.com',pix:'lauraminussi@icloud.com',collab:'Não aceita'},
+  {nome:'Manuela Garcez',regiao:'fln',insta:'@manuelagarcezz',tiktok:'@manuelagarcezzz',wpp:'(48) 97400-8719',cupom:'MANUELA10OFF',qtInsta:'35,9 mil',qtTiktok:'8.731',cpf:'050.053.430-67',email:'manugarcez3@gmail.com',pix:'050.053.430-67',collab:'Aceita'},
+  {nome:'Bruna Corrêa de Pieri',regiao:'fln',insta:'@brunadepi',tiktok:'@bruna.depi',wpp:'(48) 99108-6038',cupom:'BRUNA10OFF',qtInsta:'3.455',qtTiktok:'745',cpf:'105.778.959-31',email:'pieri.brunna@gmail.com',pix:'105.778.959-31',collab:''},
+  {nome:'Lauanda Barbosa dos Santos',regiao:'fln',insta:'@lauandabsantos',tiktok:'',wpp:'(48) 99123-3887',cupom:'LAUANDA10OFF',qtInsta:'7.316',qtTiktok:'',cpf:'146.079.707-86',email:'lauandabsantos@gmail.com',pix:'146.079.707-86',collab:''},
+  {nome:'Amanda Rietmann Busca',regiao:'fln',insta:'@nutri.amandabusca',tiktok:'@nutri.amandabusca',wpp:'(48) 99148-2068',cupom:'AMANDA10OFF',qtInsta:'6.034',qtTiktok:'4.800',cpf:'127.881.589-98',email:'amanda.busca@gmail.com',pix:'127.881.589-98',collab:''},
+  {nome:'Alanis Tayná Lopes Moreira',regiao:'cwb',insta:'@alanis_taynna',tiktok:'@alanismoreira21',wpp:'(41) 99195-0450',cupom:'ALANIS10OFF',qtInsta:'4.948',qtTiktok:'1.458',cpf:'111.818.679-67',email:'alanismoreira16@gmail.com',pix:'111.818.679-67',collab:''},
+  {nome:'Eduarda Soares Betim',regiao:'cwb',insta:'@betinduda',tiktok:'@betindudaa',wpp:'(41) 99801-0352',cupom:'',qtInsta:'',qtTiktok:'',cpf:'124.711.709-00',email:'eduardasobtm@gmail.com',pix:'124.711.709-00',collab:''},
+];
+
+// ========== GOOGLE SHEETS CONFIG ==========
+const SHEET_ID = '19v9RqaPhQk4CclD83yYqdCKvJeWDdsyDcKVvsGZKQLM';
+const SHEET_BASE = 'https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:json&sheet=';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxeyyU7SebgMSSLsgZu3xyFmJYlhCcBO5FS4Q2ZNPllYH0zDFy_cjbE7F9WrDP2AnsT6Q/exec';
+let syncStatus = 'local'; // 'local' | 'synced' | 'syncing' | 'error'
+
+// Escreve uma linha na planilha via JSONP
+async function writeToSheet(sheetName, row) {
+  return writeToSheetAPI(sheetName, row);
+}
+
+// Lê dados via JSONP (contorna CORS do GitHub Pages)
+function readFromAPI(sheetName) {
+  return new Promise((resolve) => {
+    const cbName = 'cb_' + Date.now();
+    const script = document.createElement('script');
+    let done = false;
+    const timer = setTimeout(() => {
+      if (!done) { done = true; cleanup(); resolve(null); }
+    }, 8000);
+    window[cbName] = function(data) {
+      if (!done) {
+        done = true;
+        cleanup();
+        resolve(Array.isArray(data) ? data : null);
+      }
+    };
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+    script.src = API_URL + '?action=read&sheet=' + encodeURIComponent(sheetName) + '&callback=' + cbName + '&t=' + Date.now();
+    script.onerror = () => { if (!done) { done = true; cleanup(); resolve(null); } };
+    document.head.appendChild(script);
+  });
+}
+
+// Escreve via JSONP GET (único método que funciona cross-origin)
+async function writeToSheetAPI(sheetName, row, customBody) {
+  return new Promise((resolve) => {
+    const cbName = 'wcb_' + Date.now();
+    const script = document.createElement('script');
+    let done = false;
+    const timer = setTimeout(() => {
+      if (!done) { done = true; cleanup(); resolve(false); }
+    }, 10000);
+    window[cbName] = function(data) {
+      if (!done) { done = true; cleanup(); resolve(data && data.success); }
+    };
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+    let params;
+    if (customBody && customBody.action === 'delete') {
+      params = 'action=delete&sheet=' + encodeURIComponent(sheetName) + '&key=' + encodeURIComponent(customBody.key) + '&col=' + (customBody.col||0);
+    } else {
+      params = 'action=write&sheet=' + encodeURIComponent(sheetName) + '&row=' + encodeURIComponent(JSON.stringify(row));
+    }
+    script.src = API_URL + '?' + params + '&callback=' + cbName + '&t=' + Date.now();
+    script.onerror = () => { if (!done) { done = true; cleanup(); resolve(false); } };
+    document.head.appendChild(script);
+  });
+}
+
+async function fetchSheet(sheetName) {
+  try {
+    const url = SHEET_BASE + encodeURIComponent(sheetName);
+    const res = await fetch(url);
+    const txt = await res.text();
+    const json = JSON.parse(txt.replace(/^[^{]+/, '').replace(/[^}]+$/, ''));
+    const cols = json.table.cols.map(c => c.label);
+    const rows = json.table.rows || [];
+    return rows.map(row => {
+      const obj = {};
+      cols.forEach((col, i) => {
+        const cell = row.c && row.c[i];
+        obj[col] = cell && cell.v !== null ? cell.v : '';
+      });
+      return obj;
+    });
+  } catch(e) {
+    console.warn('Sheets fetch error:', e);
+    return null;
+  }
+}
+
+async function syncFromSheets() {
+  setSyncStatus('syncing');
+  try {
+    // Carregar influenciadoras via API
+    const rows = await readFromAPI('Influenciadoras');
+    if (rows && rows.length > 0) {
+      const mapped = rows.filter(r => r['Nome Completo']).map(r => ({
+        nome:     r['Nome Completo']||'',
+        regiao:   (r['Região']||'cwb').toString().toLowerCase(),
+        insta:    r['Instagram']||'',
+        tiktok:   r['TikTok']||'',
+        wpp:      r['WhatsApp']||'',
+        cupom:    r['Cupom']||'',
+        qtInsta:  r['Seg. Instagram']||'',
+        qtTiktok: r['Seg. TikTok']||'',
+        cpf:      r['CPF']||'',
+        email:    r['E-mail']||'',
+        pix:      r['PIX']||'',
+        collab:   r['Collab']||'',
+        status:   (r['Status']||'pendente').toLowerCase(),
+        primeiro: r['Primeiro Pedido']||'',
+        obs:      r['Observações']||'',
+      }));
+      if (mapped.length > 0) {
+        influ = mapped;
+        ss('sushi_influ', influ);
+        renderInflu(); // atualiza tela com dados da planilha
+      }
+    }
+    // Carregar agendamentos
+    const agRows = await readFromAPI('Agendamentos');
+    if (agRows && agRows.length > 0) {
+      const mapped = agRows.filter(r => r['ID'] && r['Nome Influenciadora'] && !String(r['ID']).includes('_CONF') && !String(r['ID']).includes('_CANC') && r['Nome Influenciadora'] !== '[Nome da Influenciadora]' && !String(r['ID']).startsWith('AG_00') && (r['Status']||'').toLowerCase() !== 'cancelado').map(r => {
+        // Verifica se existe uma linha _CONF correspondente na planilha (confirmação)
+        const confId = String(r['ID'])+'_CONF';
+        const temConf = agRows.some(x => String(x['ID']) === confId);
+        // Também verifica status local
+        const local = agendamentos.find(a => a.id === r['ID']);
+        const statusFinal = temConf ? 'confirmado' : (local && local.status === 'confirmado' ? 'confirmado' : (r['Status']||'pendente').toLowerCase());
+        const bloqFim = temConf ? agRows.find(x=>String(x['ID'])===confId)?.['Data Bloqueio Fim']||null : (local?.dataBloqueioFim||null);
+        return {
+          id:             String(r['ID'])||'',
+          nomeInflu:      r['Nome Influenciadora']||'',
+          lojaId:         r['Loja']||'',
+          data:           r['Data Pedido']?String(r['Data Pedido']).split('T')[0]:'',
+          hora:           (function(){
+          const h = r['Horário'];
+          if(!h) return '';
+          const s = String(h);
+          if(s.includes('T')) return s.split('T')[1].substring(0,5);
+          if(s.includes(':')) return s.substring(0,5);
+          return '';
+        })(),
+          endereco:       r['Endereço Entrega']||'',
+          status:         statusFinal,
+          dataBloqueioFim:(function(){
+          if(!bloqFim) return null;
+          const s = String(bloqFim);
+          if(s.includes('T')) return s.split('T')[0];
+          return s;
+        })(),
+          ts:             r['Data Agendamento']||new Date().toISOString(),
+        };
+      });
+      if (mapped.length > 0) {
+        agendamentos = mapped;
+        ss('sushi_agend', agendamentos);
+      }
+    }
+    // Carregar conteúdos
+    const contRows = await readFromAPI('Conteudos');
+    if (contRows && contRows.length > 0) {
+      const mapped = contRows.filter(r => r['Nome Influenciadora'] && r['Link do Post'] && r['Nome Influenciadora'] !== '[Nome da Influenciadora]').map(r => ({
+        nomeInflu:  r['Nome Influenciadora']||'',
+        regiao:     (r['Região']||'cwb').toLowerCase(),
+        plataforma: r['Plataforma']||'Instagram',
+        link:       r['Link do Post']||'',
+        collab:     r['Collab']||'',
+        data:       (function(){
+          const d = r['Data Post'];
+          if(!d) return '';
+          const s = String(d);
+          if(s.includes('T')) return s.split('T')[0];
+          if(s.match(/^\d{4}-\d{2}-\d{2}/)) return s.substring(0,10);
+          return s;
+        })(),
+      }));
+      if (mapped.length > 0) {
+        conteudos = mapped;
+        ss('sushi_cont', conteudos);
+      }
+    }
+    // Carregar regiões da planilha
+    const regRows = await readFromAPI('Regiões');
+    if (regRows && regRows.length > 0) {
+      const regioesSalvas = JSON.parse(localStorage.getItem('sushi_regioes')||'{}');
+      regRows.filter(r => r['Código']).forEach(r => {
+        regioesSalvas[String(r['Código']).toLowerCase().trim()] = r['Nome']||r['Código'].toUpperCase();
+      });
+      localStorage.setItem('sushi_regioes', JSON.stringify(regioesSalvas));
+      atualizarDatalistsRegioes();
+    }
+
+    // Carregar lojas extras da planilha
+    const lojaRows = await readFromAPI('Lojas');
+    if (lojaRows && lojaRows.length > 0) {
+      const mappedLojas = lojaRows.filter(r => r['ID'] && r['Nome da Loja']).map(r => ({
+        id:  String(r['ID']||'').toLowerCase().trim(),
+        n:   r['Nome da Loja']||'',
+        r:   String(r['Região']||'cwb').toLowerCase(),
+        ig:  r['Instagram']||'',
+        end: r['Endereço']||'',
+        w:   r['WhatsApp']||'',
+        l:   r['Link de Pedido']||'',
+      }));
+      if (mappedLojas.length > 0) {
+        // Merge: mantém lojas do código + adiciona/atualiza da planilha
+        mappedLojas.forEach(lp => {
+          const idx = LOJAS.findIndex(l => l.id === lp.id);
+          if (idx >= 0) LOJAS[idx] = lp;
+          else LOJAS.push(lp);
+        });
+        // Atualiza regiões a partir das lojas
+        const regioesSalvas = JSON.parse(localStorage.getItem('sushi_regioes')||'{}');
+        LOJAS.forEach(l => {
+          if (l.r && l.r !== 'cwb' && l.r !== 'fln' && !regioesSalvas[l.r]) {
+            regioesSalvas[l.r] = l.r.toUpperCase();
+          }
+        });
+        localStorage.setItem('sushi_regioes', JSON.stringify(regioesSalvas));
+        atualizarDatalistsRegioes();
+      }
+    }
+
+    // Carregar vendas
+    const vendaRows = await readFromAPI('Vendas');
+    if (vendaRows && vendaRows.length > 0) {
+      const mapped = vendaRows.filter(r => r['Nome Influenciadora'] && r['Nome Influenciadora'] !== '[Nome da Influenciadora]').map(r => ({
+        nome:     r['Nome Influenciadora']||'',
+        regiao:   (r['Região']||'cwb').toString().toLowerCase(),
+        semana:   r['Semana']||'',
+        campanha: r['Campanha']||'',
+        pedidos:  parseInt(r['Nº Pedidos'])||0,
+        valor:    parseFloat(String(r['Valor Total (R$)']).replace(',','.'))||0,
+        data:     r['Data Registro']||'',
+      }));
+      if (mapped.length > 0) {
+        vendas = mapped;
+        ss('sushi_vendas', vendas);
+      }
+    }
+    setSyncStatus('synced');
+    return true;
+  } catch(e) {
+    console.warn('Sync error:', e);
+    setSyncStatus('error');
+    return false;
+  }
+}
+
+function setSyncStatus(s) {
+  syncStatus = s;
+  const el = document.getElementById('sync-indicator');
+  if (!el) return;
+  const map = {
+    syncing: {txt:'⟳ Sincronizando...', color:'var(--orange)'},
+    synced:  {txt:'✅ Sincronizado', color:'var(--green)'},
+    error:   {txt:'⚠️ Sem conexão (dados locais)', color:'var(--orange)'},
+    local:   {txt:'💾 Dados locais', color:'var(--muted)'},
+  };
+  const m = map[s]||map.local;
+  el.textContent = m.txt;
+  el.style.color = m.color;
+}
+
+// ========== STATE (localStorage) ==========
+function ls(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}}
+function ss(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
+
+let influ = ls('sushi_influ', INFLU_DEFAULT);
+let agendamentos = ls('sushi_agend', []);
+let conteudos = ls('sushi_cont', []);
+let vendas = ls('sushi_vendas', []);
+
+function saveAll(){ss('sushi_influ',influ);ss('sushi_agend',agendamentos);ss('sushi_cont',conteudos);ss('sushi_vendas',vendas);}
+
+// ========== HELPERS ==========
+let _perfilAtualNome = '';
+
+function getLoja(id){return LOJAS.find(l=>l.id===id)||null;}
+function getInflu(nome){return influ.find(i=>i.nome===nome)||null;}
+function diasAte(dateStr){
+  if(!dateStr)return null;
+  const d=new Date(dateStr+'T12:00:00');
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  return Math.ceil((d-hoje)/(1000*60*60*24));
+}
+function hoje(){return new Date().toISOString().split('T')[0];}
+
+// Retorna data de desbloqueio da influenciadora (null se livre)
+function getBloqueio(nomeInflu){
+  const conf = agendamentos.filter(a=>a.nomeInflu===nomeInflu&&(a.status==='confirmado'||a.dataBloqueioFim));
+  if(!conf.length)return null;
+  const comData = conf.filter(a=>a.dataBloqueioFim);
+  if(!comData.length)return null;
+  const ultimo = comData.sort((a,b)=>new Date(b.dataBloqueioFim)-new Date(a.dataBloqueioFim))[0];
+  const fimStr = String(ultimo.dataBloqueioFim).split('T')[0];
+  const fim = new Date(fimStr+'T12:00:00');
+  const agora = new Date();
+  return fim > agora ? fimStr : null;
+}
+
+// Próximo pedido pendente ou agendado
+function getProximoPedido(nomeInflu){
+  const pend = agendamentos.filter(a=>a.nomeInflu===nomeInflu&&(a.status==='pendente'||a.status==='agendado'));
+  if(!pend.length)return null;
+  return pend.sort((a,b)=>a.data.localeCompare(b.data))[0];
+}
+
+function avatarLetra(nome){return nome.trim().charAt(0).toUpperCase();}
+function formatData(d){if(!d)return '—';return new Date(d+'T12:00:00').toLocaleDateString('pt-BR');}
+
+// ========== NAVEGAÇÃO ==========
+function goPage(id, el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(el)el.classList.add('active');
+  if(id==='influenciadoras')renderInflu();
+  if(id==='agendar'){renderPendentes();renderLojas('cwb');populateInfluSelect('ag-influencer');renderCidadesExtra();}
+  if(id==='conteudos'){populateInfluSelect('cont-nome');renderConteudos();}
+  if(id==='resultados'){renderResultados();}
+  if(id==='admin'){renderAdmin();}
+}
+
+// ========== PÁGINA: INFLUENCIADORAS ==========
+let filtroInfluAtual='todas';
+function filtrarInflu(r,btn){
+  filtroInfluAtual=r;
+  document.querySelectorAll('#page-influenciadoras .btn').forEach(b=>b.style.borderColor='');
+  if(btn){btn.style.borderColor='var(--rl)';btn.style.color='var(--rl)';}
+  renderInflu();
+}
+
+function renderInflu(){
+  const grid=document.getElementById('influ-grid');
+  let lista = filtroInfluAtual==='todas' ? influ : influ.filter(i=>i.regiao===filtroInfluAtual);
+  grid.innerHTML = lista.map(inf=>{
+    const bloq = getBloqueio(inf.nome);
+    const prox = getProximoPedido(inf.nome);
+    let countdownHtml='';
+    let statusClass='st-pendente', statusTxt='Aguardando';
+
+    if(bloq){
+      const dias = diasAte(bloq);
+      statusClass='st-bloqueada'; statusTxt='Bloqueada';
+      countdownHtml=`<div class="ic-countdown">
+        <div class="ic-countdown-label">Desbloqueio em</div>
+        <div class="ic-countdown-val blocked">${dias > 0 ? dias+'d' : 'Hoje!'}</div>
+        <div class="ic-countdown-sub">${formatData(bloq)}</div>
+      </div>`;
+    } else if(prox){
+      const dias = diasAte(prox.data);
+      statusClass = prox.status==='pendente'?'st-agendado':'st-agendado';
+      statusTxt = 'Pedido agendado';
+      const cor = dias<=2?'warn':'ok';
+      countdownHtml=`<div class="ic-countdown">
+        <div class="ic-countdown-label">Pedido em</div>
+        <div class="ic-countdown-val ${cor}">${dias > 0 ? dias+'d' : dias===0?'Hoje!':'Ontem'}</div>
+        <div class="ic-countdown-sub">${formatData(prox.data)} · ${getLoja(prox.lojaId)?getLoja(prox.lojaId).n:'—'}</div>
+      </div>`;
+    } else {
+      const postsInflu = conteudos.filter(c=>c.nomeInflu===inf.nome);
+      if(postsInflu.length){statusClass='st-postou';statusTxt='Postou '+postsInflu.length+'x';}
+      countdownHtml=`<div class="ic-countdown">
+        <div class="ic-countdown-label">Próximo pedido</div>
+        <div class="ic-countdown-val ok" style="font-size:14px;font-weight:600">Livre ✓</div>
+        <div class="ic-countdown-sub">Sem agendamento ativo</div>
+      </div>`;
+    }
+
+    return `<div class="influ-card${bloq?' bloqueada':''}" onclick="abrirPerfil('${inf.nome.replace(/'/g,"\\'")}')">
+      <div class="ic-top">
+        <div class="ic-avatar">${avatarLetra(inf.nome)}</div>
+        <span class="ic-status ${statusClass}">${statusTxt}</span>
+      </div>
+      <div class="ic-nome">${inf.nome}</div>
+      <div class="ic-redes">${inf.insta||''}${inf.tiktok?' · '+inf.tiktok:''}</div>
+      ${inf.cupom?`<div class="ic-cupom">🏷 ${inf.cupom}</div>`:''}
+      ${countdownHtml}
+    </div>`;
+  }).join('');
+}
+
+function abrirPerfil(nome){
+  const inf = getInflu(nome);
+  if(!inf)return;
+  _perfilAtualNome = nome;
+  document.getElementById('perf-nome').textContent=inf.nome;
+  const bloq=getBloqueio(nome);
+  const prox=getProximoPedido(nome);
+  const posts=conteudos.filter(c=>c.nomeInflu===nome);
+  const ags=agendamentos.filter(a=>a.nomeInflu===nome);
+
+  let bloqHtml='';
+  if(bloq)bloqHtml=`<div class="block-banner" style="margin-bottom:14px">🔒 Bloqueada até ${formatData(bloq)} (15 dias após último pedido confirmado)</div>`;
+
+  let agHtml='';
+  if(prox){
+    const l=getLoja(prox.lojaId);
+    agHtml=`<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r4);padding:12px;margin-bottom:14px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--orange);margin-bottom:6px">📅 Pedido Agendado</div>
+      <div style="font-size:13px">${formatData(prox.data)} às ${prox.hora||'—'} · <strong>${l?l.n:'—'}</strong></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">${prox.endereco||''}</div>
+      <div style="margin-top:6px"><span style="font-size:11px;padding:3px 8px;border-radius:2px;background:rgba(243,156,18,.15);color:var(--orange);font-weight:700">${prox.status==='pendente'?'⏳ Aguardando confirmação':'📅 Agendado'}</span></div>
+    </div>`;
+  }
+
+  // Histórico de pedidos
+  const todosAgs = agendamentos.filter(function(a){return a.nomeInflu===nome;}).sort(function(a,b){return b.data.localeCompare(a.data);});
+  let histHtml='';
+  if(todosAgs.length){
+    let rows='';
+    todosAgs.forEach(function(a){
+      const l=getLoja(a.lojaId);
+      const stColor=a.status==='confirmado'?'var(--green)':a.status==='pendente'?'var(--orange)':'var(--muted)';
+      const stLabel=a.status==='confirmado'?'✅ Confirmado':a.status==='pendente'?'⏳ Pendente':'📅 Agendado';
+      const lNome=l?l.n:'Loja não definida';
+      const dataStr=formatData(a.data)+(a.hora?' às '+a.hora:'')+(a.endereco?' · '+a.endereco:'');
+      rows+='<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r4);margin-bottom:7px">'
+           +'<div style="font-size:20px">🍣</div>'
+           +'<div style="flex:1;min-width:0">'
+           +'<div style="font-size:13px;font-weight:600">'+lNome+'</div>'
+           +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+dataStr+'</div>'
+           +'</div>'
+           +'<span style="font-size:11px;padding:3px 9px;border-radius:2px;background:rgba(0,0,0,.3);color:'+stColor+';font-weight:700;white-space:nowrap">'+stLabel+'</span>'
+           +'</div>';
+    });
+    histHtml='<div>'
+      +'<div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">🛒 Histórico de Pedidos ('+todosAgs.length+')</div>'
+      +rows
+      +'</div>';
+  } else {
+    histHtml='<div style="font-size:13px;color:var(--muted);text-align:center;padding:16px">🛒 Nenhum pedido registrado ainda</div>';
+  }
+
+  let postsHtml='';
+  if(posts.length){
+    postsHtml=`<div class="posts-section">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">📸 Posts Publicados (${posts.length})</div>
+      ${posts.map(p=>`<div class="post-item">
+        <div class="post-icon">${p.plataforma==='TikTok'?'🎵':'📸'}</div>
+        <div class="post-info">
+          <div style="font-size:12px;font-weight:600">${p.plataforma}</div>
+          <div class="post-date">${formatData(p.data)}</div>
+          <a href="${p.link}" target="_blank" class="post-link">${p.link}</a>
+        </div>
+        <a href="${p.link}" target="_blank" class="btn btn-ghost btn-sm">↗</a>
+      </div>`).join('')}
+    </div>`;
+  } else {
+    postsHtml=`<div class="no-posts">📭 Nenhum post registrado ainda</div>`;
+  }
+
+  document.getElementById('perf-body').innerHTML=`
+    ${bloqHtml}
+    <div class="prof-header">
+      <div class="prof-av">${avatarLetra(inf.nome)}</div>
+      <div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+          <span class="rb ${regiaoClass(inf.regiao)}">${regiaoLabel(inf.regiao)}</span>
+          ${inf.cupom?`<span style="background:var(--gdim);border:1px solid rgba(232,184,109,.2);padding:2px 8px;border-radius:2px;font-size:10px;font-weight:700;color:var(--gold)">🏷 ${inf.cupom}</span>`:''}
+          ${inf.collab?`<span style="background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.2);padding:2px 8px;border-radius:2px;font-size:10px;font-weight:700;color:var(--green)">Collab: ${inf.collab}</span>`:''}
+        </div>
+        <div style="font-size:13px;color:var(--muted2)">${inf.insta||''}${inf.tiktok?' · '+inf.tiktok:''}</div>
+      </div>
+    </div>
+    <div class="prof-grid">
+      <div class="pf-item"><div class="pf-label">Instagram</div><div class="pf-val">${inf.insta||'—'} ${inf.qtInsta?'('+inf.qtInsta+')':''}</div></div>
+      <div class="pf-item"><div class="pf-label">TikTok</div><div class="pf-val">${inf.tiktok||'—'} ${inf.qtTiktok?'('+inf.qtTiktok+')':''}</div></div>
+      <div class="pf-item"><div class="pf-label">WhatsApp</div><div class="pf-val">${inf.wpp||'—'}</div></div>
+      <div class="pf-item"><div class="pf-label">E-mail</div><div class="pf-val">${inf.email||'—'}</div></div>
+    </div>
+    ${agHtml}
+    <hr class="divider">
+    ${postsHtml}
+    <hr class="divider">
+    ${histHtml}
+  `;
+  const wb=document.getElementById('perf-wpp');
+  if(inf.wpp){wb.style.display='inline-flex';wb.onclick=()=>window.open(`https://wa.me/55${inf.wpp.replace(/\D/g,'')}`);}
+  else wb.style.display='none';
+  document.getElementById('modal-perfil').classList.add('open');
+}
+
+// ========== PÁGINA: AGENDAR ==========
+let cidadeSel='cwb', lojaSel=null;
+
+function getRegioesSalvas(){
+  return JSON.parse(localStorage.getItem('sushi_regioes')||'{}');
+}
+
+function atualizarDatalistsRegioes(){
+  const regioes=getRegioesSalvas();
+  // Atualiza ambos os datalists
+  ['regioes-list','regioes-list2'].forEach(id=>{
+    const dl=document.getElementById(id);
+    if(!dl)return;
+    // Mantém cwb e fln, adiciona extras
+    const extras=Object.entries(regioes).filter(([k])=>k!=='cwb'&&k!=='fln');
+    const existingExtras=dl.querySelectorAll('option.extra');
+    existingExtras.forEach(o=>o.remove());
+    extras.forEach(([k,v])=>{
+      const o=document.createElement('option');
+      o.value=k; o.textContent=v; o.className='extra';
+      dl.appendChild(o);
+    });
+  });
+}
+
+function renderCidadesExtra(){
+  const regioes=getRegioesSalvas();
+  const extras=Object.entries(regioes).filter(([k])=>k!=='cwb'&&k!=='fln');
+  // Também pega de lojasExtra caso não tenha sido salvo em sushi_regioes
+  const deLojasExtra=[...new Set(lojasExtra.map(l=>l.r))].filter(r=>r!=='cwb'&&r!=='fln');
+  const todasExtras=[...new Set([...extras.map(([k])=>k),...deLojasExtra])];
+  const el=document.getElementById('cidades-extra');
+  if(!el)return;
+  el.innerHTML=todasExtras.map(r=>{
+    const label=regioes[r]||r.toUpperCase();
+    return `<button class="cidade-btn" onclick="selecionarCidade('${r}',this)">📍 ${label}</button>`;
+  }).join('');
+}
+
+function selecionarCidade(r,btn){
+  cidadeSel=r; lojaSel=null;
+  document.querySelectorAll('.cidade-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('ag-form').style.display='none';
+  renderLojas(r);
+}
+
+function renderLojas(r){
+  const grid=document.getElementById('lojas-grid');
+  const lista=getAllLojas().filter(l=>l.r===r);
+  grid.innerHTML=lista.map(l=>`
+    <div class="loja-sel" id="loja-card-${l.id}" onclick="selecionarLoja('${l.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div class="loja-sel-name">${l.n}</div>
+        <span class="rb ${regiaoClass(r)}" style="flex-shrink:0;margin-left:8px">${regiaoLabel(r)}</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:3px">${l.ig}</div>
+      <div class="loja-sel-end">${l.end}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        ${l.l?`<a href="${l.l}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:var(--rl);text-decoration:none;padding:3px 8px;border:1px solid rgba(200,16,46,.25);border-radius:2px">🛒 Pedir</a>`:''}
+        <span class="loja-sel-wpp">💬 ${l.w}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function selecionarLoja(id){
+  lojaSel=id;
+  document.querySelectorAll('.loja-sel').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('loja-card-'+id).classList.add('selected');
+  const l=getLoja(id);
+  document.getElementById('ag-form-title').textContent=`📋 Agendamento — ${l.n}`;
+  document.getElementById('ag-form').style.display='block';
+  document.getElementById('ag-form').scrollIntoView({behavior:'smooth',block:'start'});
+  updAg();
+}
+
+function cancelarAg(){
+  lojaSel=null;
+  document.querySelectorAll('.loja-sel').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('ag-form').style.display='none';
+}
+
+function populateInfluSelect(selId){
+  const s=document.getElementById(selId);
+  const val=s.value;
+  s.innerHTML='<option value="">Selecione seu nome...</option>';
+  influ.forEach(i=>s.innerHTML+=`<option value="${i.nome}">${i.nome}</option>`);
+  if(val)s.value=val;
+}
+
+function updAg(){
+  const nome=document.getElementById('ag-influencer').value;
+  const data=document.getElementById('ag-data').value;
+  const hora=document.getElementById('ag-hora').value||'19:00';
+  const end=document.getElementById('ag-end').value||'a informar';
+
+  // Check bloqueio
+  const bb=document.getElementById('bloqueio-banner');
+  if(nome){
+    const bloq=getBloqueio(nome);
+    if(bloq){
+      bb.style.display='flex';
+      document.getElementById('bloqueio-msg').textContent=`${nome} está bloqueada até ${formatData(bloq)}. O próximo pedido só pode ser realizado após 15 dias do último pedido confirmado.`;
+      document.getElementById('btn-confirmar-ag').style.display='none';
+      document.getElementById('btn-enviar-wpp').style.display='none';
+      document.getElementById('wpp-preview-wrap').style.display='none';
+      return;
+    } else {
+      bb.style.display='none';
+    }
+  }
+
+  if(!lojaSel||!data||!nome){
+    document.getElementById('wpp-preview-wrap').style.display='none';
+    document.getElementById('btn-confirmar-ag').style.display='none';
+    document.getElementById('btn-enviar-wpp').style.display='none';
+    return;
+  }
+  const l=getLoja(lojaSel);
+  const df=formatData(data);
+  const msg=`Olá! Tudo bem? 🍣\n\nPassando para avisar com antecedência que a influenciadora *${nome}* (${getInflu(nome)?.insta||''}) irá realizar um pedido na loja *${l.n}* no dia *${df}* às *${hora}*.\n\n📍 Endereço de entrega: ${end}\n\nEla participa da campanha de UGC da S.A. Casa do Sushi e irá produzir conteúdo sobre a experiência. Pedimos atenção especial! 🙏\n\n*Equipe de Marketing — S.A. Casa do Sushi*`;
+  document.getElementById('wpp-preview-txt').textContent=msg;
+  document.getElementById('wpp-preview-wrap').style.display='block';
+  document.getElementById('btn-confirmar-ag').style.display='inline-flex';
+  if(l.w){
+    const btn=document.getElementById('btn-enviar-wpp');
+    btn.style.display='inline-flex';
+    btn.onclick=()=>window.open(`https://wa.me/55${l.w.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`,'_blank');
+  }
+}
+
+function confirmarAgendamento(){
+  const nome=document.getElementById('ag-influencer').value;
+  const data=document.getElementById('ag-data').value;
+  const hora=document.getElementById('ag-hora').value||'19:00';
+  const end=document.getElementById('ag-end').value;
+  if(!nome||!data||!lojaSel){showN('⚠️ Preencha todos os campos!');return;}
+
+  const id='ag_'+Date.now();
+  const novoAg = {id,nomeInflu:nome,lojaId:lojaSel,data,hora,endereco:end,status:'pendente',dataBloqueioFim:null,ts:new Date().toISOString()};
+  agendamentos.push(novoAg);
+  saveAll();
+  // Grava na planilha
+  const loja = getLoja(lojaSel);
+  writeToSheetAPI('Agendamentos', [id, nome, loja?loja.n:lojaSel, data, hora, end, 'Pendente', '', new Date().toISOString(), '']);
+  showN('✅ Agendamento confirmado! Status: pendente de recebimento.');
+  cancelarAg();
+  document.getElementById('ag-influencer').value='';
+  document.getElementById('ag-data').value='';
+  document.getElementById('ag-end').value='';
+  renderPendentes();
+  renderInflu();
+}
+
+// PENDENTES
+function renderPendentes(){
+  const pend=agendamentos.filter(a=>a.status==='pendente');
+  const sec=document.getElementById('pend-section');
+  const list=document.getElementById('pend-list');
+  if(!pend.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  list.innerHTML=pend.map(a=>{
+    const l=getLoja(a.lojaId);
+    return `<div class="pend-card">
+      <div class="pend-head">
+        <div class="pend-nome">🍣 ${a.nomeInflu}</div>
+        <span style="font-size:11px;padding:3px 9px;border-radius:2px;background:rgba(243,156,18,.15);color:var(--orange);font-weight:700">⏳ Pendente</span>
+      </div>
+      <div class="pend-info">
+        📅 ${formatData(a.data)} às ${a.hora||'—'}<br>
+        📍 ${l?l.n:'—'} — ${a.endereco||'sem endereço'}<br>
+        🕐 Agendado em: ${new Date(a.ts).toLocaleDateString('pt-BR')}
+      </div>
+      <div class="pend-actions">
+        <button class="btn btn-green btn-sm" onclick="confirmarRecebimento('${a.id}')">✅ Confirmar Recebimento</button>
+        <button class="btn btn-ghost btn-sm" onclick="cancelarAgendamento('${a.id}')">✕ Cancelar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function confirmarRecebimento(id){
+  const ag=agendamentos.find(a=>a.id===id);
+  if(!ag)return;
+  // Bloqueia por 15 dias a partir de hoje
+  const fim=new Date();fim.setDate(fim.getDate()+15);
+  ag.status='confirmado';
+  ag.dataBloqueioFim=fim.toISOString().split('T')[0];
+  saveAll();
+  // Atualiza status na planilha (nova linha de confirmação)
+  writeToSheetAPI('Agendamentos', [ag.id+'_CONF', ag.nomeInflu, ag.lojaId, ag.data, ag.hora, ag.endereco, 'Confirmado', ag.dataBloqueioFim, new Date().toISOString(), 'Confirmado pela loja']);
+  showN(`✅ Recebimento confirmado! ${ag.nomeInflu} bloqueada por 15 dias.`);
+  renderPendentes();
+  renderInflu();
+}
+
+function cancelarAgendamento(id){
+  const ag = agendamentos.find(a=>a.id===id);
+  agendamentos=agendamentos.filter(a=>a.id!==id);
+  saveAll();
+  if(ag){
+    // Grava cancelamento na planilha
+    writeToSheetAPI('Agendamentos',[ag.id+'_CANC',ag.nomeInflu,ag.lojaId,ag.data,ag.hora,ag.endereco,'Cancelado','',new Date().toISOString(),'Cancelado pelo usuário']);
+  }
+  renderPendentes();
+  renderInflu();
+  showN('🗑 Agendamento cancelado.');
+}
+
+// ========== PÁGINA: CONTEÚDOS ==========
+function addConteudo(){
+  const nome=document.getElementById('cont-nome').value;
+  const link=document.getElementById('cont-link').value.trim();
+  const plat=document.getElementById('cont-plat').value;
+  const collab=document.getElementById('cont-collab').value;
+  if(!nome||!link){showN('⚠️ Selecione seu nome e cole o link!');return;}
+  if(!link.startsWith('http')){showN('⚠️ Link inválido. Deve começar com https://');return;}
+  const inf=getInflu(nome);
+  const regiao = inf?inf.regiao:'';
+  conteudos.push({nomeInflu:nome,regiao,plataforma:plat,link,collab,data:hoje()});
+  if(collab&&inf){const idx=influ.indexOf(inf);if(idx>=0){influ[idx].collab=collab;}}
+  saveAll();
+  // Grava na planilha
+  writeToSheetAPI('Conteudos', [nome, regiao.toUpperCase(), plat, link, collab, hoje(), '']);
+  document.getElementById('cont-link').value='';
+  document.getElementById('cont-nome').value='';
+  document.getElementById('cont-collab').value='';
+  renderConteudos();
+  renderInflu();
+  const msg=collab==='Aceita'?'📸 Link registrado! Collab aceita ✅':collab==='Não aceita'?'📸 Link registrado. Collab não aceita ❌':'📸 Link registrado com sucesso!';
+  showN(msg);
+}
+
+let filtroContAtual='todos';
+function filtrarConteudos(r,btn){
+  filtroContAtual=r;
+  document.querySelectorAll('#page-conteudos .btn').forEach(b=>{b.style.borderColor='';b.style.color='';});
+  if(btn){btn.style.borderColor='var(--rl)';btn.style.color='var(--rl)';}
+  renderConteudos();
+}
+
+function renderConteudos(){
+  const grid=document.getElementById('cont-grid');
+  let lista=filtroContAtual==='todos'?conteudos:conteudos.filter(c=>c.regiao===filtroContAtual);
+  if(!lista.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ic">📭</div><p>Nenhum conteúdo registrado ainda</p></div>';return;}
+  grid.innerHTML=[...lista].reverse().map(c=>`
+    <div class="cont-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div class="cont-nome">${c.nomeInflu}</div>
+        <span style="font-size:18px">${c.plataforma==='TikTok'?'🎵':'📸'}</span>
+      </div>
+      <div class="cont-date">${formatData(c.data)} · ${c.plataforma}</div>
+      <a href="${c.link}" target="_blank" class="cont-link">${c.link}</a>
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        <a href="${c.link}" target="_blank" class="btn btn-ghost btn-sm">↗ Abrir</a>
+        <span class="rb ${regiaoClass(c.regiao)}" style="padding:3px 8px">${regiaoLabel(c.regiao)}</span>
+        ${c.collab?`<span style="font-size:11px;padding:3px 9px;border-radius:2px;font-weight:700;${c.collab==='Aceita'?'background:rgba(46,204,113,.15);color:var(--green)':c.collab==='Não aceita'?'background:rgba(255,100,100,.12);color:#ff6b6b':'background:rgba(243,156,18,.15);color:var(--orange)'}">Collab: ${c.collab}</span>`:''}
+      </div>
+    </div>
+  `).join('');
+}
+
+
+// ========== LOJAS DINÂMICAS ==========
+let lojasExtra = JSON.parse(localStorage.getItem('sushi_lojas_extra')||'[]');
+function getAllLojas(){return [...LOJAS,...lojasExtra];}
+
+function getLoja(id){
+  if(!id) return null;
+  const idStr = String(id).trim().toLowerCase();
+  return getAllLojas().find(l=>
+    l.id===idStr ||
+    l.id===id ||
+    l.n.toLowerCase()===idStr ||
+    l.n===id
+  )||null;
+}
+
+// ========== ADMIN SUBTABS ==========
+function showAdminTab(tab, btn){
+  ['cadastros','vendas-imp','gestao'].forEach(t=>{
+    const el=document.getElementById('admin-tab-'+t);
+    if(el)el.style.display=t===tab?'block':'none';
+  });
+  document.querySelectorAll('#admin-subtabs .btn').forEach(b=>{
+    b.classList.remove('btn-red');b.classList.add('btn-ghost');
+  });
+  if(btn){btn.classList.add('btn-red');btn.classList.remove('btn-ghost');}
+}
+
+// ========== ADICIONAR INFLUENCIADORA ==========
+async function removerInflu(nome){
+  if(!confirm('Remover ' + nome + '? Esta ação também remove da planilha.')) return;
+  const idx = influ.findIndex(i => i.nome === nome);
+  if(idx < 0) return;
+  influ.splice(idx, 1);
+  saveAll();
+  renderAdmin();
+  renderInflu();
+  showN('🗑 Removendo da planilha...');
+  try {
+    await writeToSheetAPI('Influenciadoras', null, {action:'delete', sheet:'Influenciadoras', key: nome, col: 0});
+    showN('✅ Removida da planilha!');
+  } catch(e) {
+    showN('✅ Removida localmente.');
+  }
+}
+
+async function addInflu(){
+  const nome=document.getElementById('n-nome').value.trim();
+  const regiao=document.getElementById('n-reg').value;
+  if(!nome){showN('⚠️ Nome obrigatório!');return;}
+  if(influ.find(i=>i.nome===nome)){showN('⚠️ Já existe uma influenciadora com esse nome!');return;}
+  const nova = {
+    nome, regiao,
+    insta:document.getElementById('n-insta').value.trim(),
+    tiktok:document.getElementById('n-tiktok').value.trim(),
+    wpp:document.getElementById('n-wpp').value.trim(),
+    cupom:document.getElementById('n-cupom').value.trim(),
+    qtInsta:document.getElementById('n-qi').value.trim(),
+    qtTiktok:document.getElementById('n-qt').value.trim(),
+    cpf:document.getElementById('n-cpf').value.trim(),
+    email:document.getElementById('n-email').value.trim(),
+    pix:document.getElementById('n-pix').value.trim(),
+    collab:document.getElementById('n-collab').value,
+    status:'Pendente', primeiro:'', obs:'',
+  };
+  influ.push(nova);
+  saveAll();
+  ['n-nome','n-insta','n-tiktok','n-wpp','n-cupom','n-qi','n-qt','n-cpf','n-email','n-pix'].forEach(id=>document.getElementById(id).value='');
+  showN('💾 Salvando na planilha...');
+  renderAdmin();
+  renderInflu();
+  // Grava na planilha
+  try {
+    await writeToSheetAPI('Influenciadoras', [
+      nova.nome,
+      nova.regiao ? nova.regiao.toUpperCase() : '',
+      nova.insta||'',
+      nova.tiktok||'',
+      nova.wpp||'',
+      nova.cupom||'',
+      nova.qtInsta||'',
+      nova.qtTiktok||'',
+      nova.cpf||'',
+      nova.email||'',
+      nova.pix||'',
+      nova.collab||'',
+      'Pendente','','',
+      new Date().toISOString().split('T')[0]
+    ]);
+    showN('✅ Influenciadora salva na planilha!');
+  } catch(e) {
+    showN('✅ Adicionada localmente. Verifique a planilha.');
+  }
+}
+
+// ========== REMOVER LOJA ==========
+async function removerLoja(id, nome){
+  if(!confirm('Remover loja "'+nome+'"?')) return;
+  // Remove local
+  const lojaIdx = LOJAS.findIndex(l=>l.id===id);
+  if(lojaIdx>=0) LOJAS.splice(lojaIdx,1);
+  const extraIdx = lojasExtra.findIndex(l=>l.id===id);
+  if(extraIdx>=0) lojasExtra.splice(extraIdx,1);
+  localStorage.setItem('sushi_lojas_extra',JSON.stringify(lojasExtra));
+  renderAdmin();
+  renderLojas(cidadeSel);
+  showN('🗑 Removendo loja da planilha...');
+  // Remove da planilha
+  const ok = await writeToSheetAPI('Lojas', null, {action:'delete', sheet:'Lojas', key: id, col: 0});
+  showN(ok ? '✅ Loja removida da planilha!' : '✅ Removida localmente.');
+}
+
+// ========== GERENCIAR REGIÕES ==========
+function addRegiao(){
+  const cod = document.getElementById('reg-cod').value.trim().toLowerCase().replace(/\s+/g,'');
+  const label = document.getElementById('reg-label').value.trim();
+  if(!cod){showN('⚠️ Código obrigatório!');return;}
+  const regioes = JSON.parse(localStorage.getItem('sushi_regioes')||'{}');
+  if(regioes[cod]&&cod!=='cwb'&&cod!=='fln'){
+    if(!confirm(`Região "${cod}" já existe. Atualizar o nome?`))return;
+  }
+  regioes[cod] = label || cod.toUpperCase();
+  localStorage.setItem('sushi_regioes', JSON.stringify(regioes));
+  document.getElementById('reg-cod').value='';
+  document.getElementById('reg-label').value='';
+  atualizarDatalistsRegioes();
+  renderRegioesList();
+  renderCidadesExtra();
+  // Grava na planilha
+  writeToSheetAPI('Regiões', [cod, regioes[cod]]);
+  showN('✅ Região "'+cod.toUpperCase()+'" adicionada!');
+}
+
+function removerRegiao(cod){
+  if(cod==='cwb'||cod==='fln'){showN('⚠️ Não é possível remover regiões padrão!');return;}
+  if(!confirm('Remover região "'+cod.toUpperCase()+'"?'))return;
+  const regioes = JSON.parse(localStorage.getItem('sushi_regioes')||'{}');
+  delete regioes[cod];
+  localStorage.setItem('sushi_regioes', JSON.stringify(regioes));
+  atualizarDatalistsRegioes();
+  renderRegioesList();
+  renderCidadesExtra();
+  writeToSheetAPI('Regiões', null, {action:'delete', sheet:'Regiões', key: cod, col: 0});
+  showN('🗑 Região removida!');
+}
+
+function renderRegioesList(){
+  const el=document.getElementById('regioes-lista');
+  if(!el)return;
+  const regioes=JSON.parse(localStorage.getItem('sushi_regioes')||'{}');
+  const fixas={cwb:'Curitiba & Região',fln:'Florianópolis / SC'};
+  const todas={...fixas,...regioes};
+  el.innerHTML=Object.entries(todas).map(([cod,label])=>`
+    <div style="display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r3);padding:5px 10px">
+      <span class="rb ${regiaoClass(cod)}" style="font-size:10px">${regiaoLabel(cod)}</span>
+      <span style="font-size:11px;color:var(--muted)">${label}</span>
+      ${cod!=='cwb'&&cod!=='fln'?`<button onclick="removerRegiao('${cod}')" style="background:none;border:none;color:#ff6b6b;cursor:pointer;font-size:13px;padding:0 2px;line-height:1">×</button>`:''}
+    </div>
+  `).join('');
+}
+
+// ========== ADICIONAR LOJA ==========
+function addLoja(){
+  const id=document.getElementById('l-id').value.trim().replace(/\s/g,'');
+  const nome=document.getElementById('l-nome').value.trim();
+  if(!id||!nome){showN('⚠️ ID e nome são obrigatórios!');return;}
+  if(getAllLojas().find(l=>l.id===id)){showN('⚠️ ID já existe!');return;}
+  const regCod=document.getElementById('l-reg').value.trim().toLowerCase().replace(/\s/g,'_');
+  const regLabel=document.getElementById('l-reg-label').value.trim()||regCod.toUpperCase();
+  lojasExtra.push({
+    id, n:nome,
+    r:regCod,
+    regLabel,
+    ig:document.getElementById('l-ig').value.trim(),
+    end:document.getElementById('l-end').value.trim(),
+    w:document.getElementById('l-wpp').value.trim(),
+    l:document.getElementById('l-link').value.trim(),
+  });
+  // Salva mapeamento de regiões
+  const regioesSalvas=JSON.parse(localStorage.getItem('sushi_regioes')||'{}');
+  regioesSalvas[regCod]=regLabel;
+  localStorage.setItem('sushi_regioes',JSON.stringify(regioesSalvas));
+  localStorage.setItem('sushi_lojas_extra',JSON.stringify(lojasExtra));
+  ['l-id','l-nome','l-ig','l-end','l-wpp','l-link','l-reg','l-reg-label'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  atualizarDatalistsRegioes();
+  // Grava nova loja na planilha
+  const novaLoja = lojasExtra[lojasExtra.length-1];
+  writeToSheetAPI('Lojas', [novaLoja.id, novaLoja.n, novaLoja.r.toUpperCase(), novaLoja.ig||'', novaLoja.end||'', novaLoja.w||'', novaLoja.l||'']);
+  showN('✅ Loja adicionada!');
+  renderAdmin();
+}
+
+// ========== RESULTADOS ==========
+function renderResultados(){
+  const tbody=document.getElementById('res-tbody');
+  const ranking=document.getElementById('res-ranking');
+  if(!vendas.length){
+    ranking.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ic">📊</div><p>Nenhum resultado registrado ainda.<br>Aguarde o lançamento semanal da equipe!</p></div>';
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">Sem dados ainda.</td></tr>';
+    return;
+  }
+
+  // Aggregate by influenciadora
+  const agg={};
+  vendas.forEach(v=>{
+    if(!agg[v.nome])agg[v.nome]={nome:v.nome,regiao:v.regiao,pedidos:0,valor:0};
+    agg[v.nome].pedidos+=parseInt(v.pedidos)||0;
+    agg[v.nome].valor+=parseFloat(v.valor)||0;
+  });
+  const sorted=Object.values(agg).sort((a,b)=>b.valor-a.valor);
+  const medals=['🥇','🥈','🥉'];
+  const maxVal=sorted[0]?.valor||1;
+
+  ranking.innerHTML=sorted.map((r,i)=>{
+    const pct=Math.round((r.valor/maxVal)*100);
+    const medal=medals[i]||`#${i+1}`;
+    return `<div style="background:var(--s1);border:1px solid ${i===0?'rgba(232,184,109,.35)':i===1?'rgba(255,255,255,.12)':i===2?'rgba(200,16,46,.2)':'var(--bdr)'};border-radius:var(--r6);padding:18px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:22px">${medal}</div>
+        <span class="rb ${regiaoClass(r.regiao)}">${regiaoLabel(r.regiao)}</span>
+      </div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:4px">${r.nome}</div>
+      <div style="font-size:20px;font-weight:700;color:var(--gold);margin-bottom:4px">R$ ${r.valor.toFixed(2)}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">${r.pedidos} pedido${r.pedidos!==1?'s':''} · ticket médio R$ ${r.pedidos?(r.valor/r.pedidos).toFixed(2):'—'}</div>
+      <div style="height:4px;background:var(--s3);border-radius:2px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${i===0?'var(--gold)':i===1?'rgba(255,255,255,.4)':'var(--red)'};border-radius:2px;transition:width .6s ease"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Last semana label
+  const semanas=[...new Set(vendas.map(v=>v.semana).filter(Boolean))].sort();
+  if(semanas.length)document.getElementById('res-semana-label').textContent=`Última atualização: semana ${semanas[semanas.length-1]}`;
+
+  // Table
+  tbody.innerHTML=[...vendas].reverse().map(v=>`<tr>
+    <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-weight:600">${v.nome}</td>
+    <td style="padding:10px 12px;border-bottom:1px solid var(--bdr)"><span class="rb ${regiaoClass(v.regiao)}">${regiaoLabel(v.regiao)}</span></td>
+    <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--muted)">${v.semana||'—'}</td>
+    <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-weight:700">${v.pedidos||0}</td>
+    <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-weight:700;color:var(--gold)">R$ ${parseFloat(v.valor||0).toFixed(2)}</td>
+    <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);color:var(--muted)">${v.pedidos&&v.valor?(parseFloat(v.valor)/parseInt(v.pedidos)).toFixed(2):'—'}</td>
+  </tr>`).join('');
+}
+
+// ========== ADMIN RENDER (ATUALIZADO) ==========
+
+// ========== ADMIN ==========
+function renderAdmin(){
+  showAdminTab('cadastros', document.querySelector('#admin-subtabs .btn'));
+  renderRegioesList();
+  // Stats
+  const stats=[
+    {label:'Influenciadoras',val:influ.length,color:'var(--rl)'},
+    {label:'Agendamentos',val:agendamentos.length,color:'var(--orange)'},
+    {label:'Posts',val:conteudos.length,color:'var(--green)'},
+    {label:'Registros Venda',val:vendas.length,color:'var(--gold)'},
+  ];
+  const statsEl=document.getElementById('admin-stats');
+  if(statsEl)statsEl.innerHTML=stats.map(s=>`
+    <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r4);padding:16px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">${s.label}</div>
+      <div style="font-size:24px;font-weight:700;color:${s.color}">${s.val}</div>
+    </div>`).join('');
+
+  // Influ list
+  const tbody2=document.getElementById('admin-influ-tbody');
+  const cnt=document.getElementById('influ-count');
+  if(cnt)cnt.textContent=influ.length+' cadastradas';
+  if(tbody2)tbody2.innerHTML=influ.map((inf2,i)=>`<tr>
+    <td style="padding:8px 10px;border-bottom:1px solid var(--bdr)">${inf2.nome}</td>
+    <td style="padding:8px 10px;border-bottom:1px solid var(--bdr)"><span class="rb ${regiaoClass(inf2.regiao)}">${regiaoLabel(inf2.regiao)}</span></td>
+    <td style="padding:8px 10px;border-bottom:1px solid var(--bdr);color:var(--gold);font-weight:700">${inf2.cupom||'—'}</td>
+    <td style="padding:8px 10px;border-bottom:1px solid var(--bdr);color:var(--muted)">${inf2.insta||'—'}</td>
+    <td style="padding:8px 10px;border-bottom:1px solid var(--bdr)">
+      <button onclick="removerInflu('${inf2.nome.replace(/'/g,"\'")}')" class="btn btn-ghost btn-sm" style="color:#ff6b6b;border-color:rgba(255,100,100,.2)">🗑</button>
+    </td>
+  </tr>`).join('');
+
+  // Vendas table
+  const th=document.getElementById('vthead');
+  const tb=document.getElementById('vtbody');
+  if(th)th.innerHTML='<th style="text-align:left;padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Influenciadora</th><th style="text-align:left;padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Região</th><th style="text-align:left;padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Semana</th><th style="text-align:left;padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Pedidos</th><th style="text-align:left;padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Total</th>';
+  if(!vendas.length&&tb){tb.innerHTML='<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted)">Nenhuma venda registrada.</td></tr>';} 
+  else if(tb){tb.innerHTML=[...vendas].reverse().map(v=>`<tr>
+    <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-weight:600">${v.nome}</td>
+    <td style="padding:10px 12px;border-bottom:1px solid var(--bdr)"><span class="rb ${regiaoClass(v.regiao)}">${regiaoLabel(v.regiao)}</span></td>
+    <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--muted)">${v.semana||'—'}</td>
+    <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-weight:700">${v.pedidos||0}</td>
+    <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-weight:700;color:var(--gold)">R$ ${parseFloat(v.valor||0).toFixed(2)}</td>
+  </tr>`).join('');}
+
+  // Gestao - agendamentos
+  const ga=document.getElementById('gestao-agend');
+  if(ga){
+    const ativos=agendamentos.filter(a=>a.status==='pendente'||a.status==='agendado');
+    ga.innerHTML=ativos.length?ativos.map(a=>{
+      const l=getLoja(a.lojaId);
+      return `<div style="background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r4);padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:180px"><strong>${a.nomeInflu}</strong><br><span style="font-size:12px;color:var(--muted)">${formatData(a.data)} · ${l?l.n:'—'}</span></div>
+        <span style="font-size:11px;padding:3px 8px;border-radius:2px;background:rgba(243,156,18,.15);color:var(--orange);font-weight:700">⏳ Pendente</span>
+        <button class="btn btn-green btn-sm" onclick="confirmarRecebimento('${a.id}');renderAdmin()">✅ Confirmar</button>
+        <button class="btn btn-ghost btn-sm" onclick="cancelarAgendamento('${a.id}');renderAdmin()">✕</button>
+      </div>`;
+    }).join(''):'<div style="color:var(--muted);font-size:13px;padding:16px">Nenhum agendamento ativo.</div>';}
+
+  // Gestao - lojas extras
+  const gl=document.getElementById('gestao-lojas');
+  if(gl){
+    const todas=getAllLojas();
+    gl.innerHTML=todas.length?todas.map((l,i)=>{
+      const isExtra=lojasExtra.findIndex(x=>x.id===l.id)>=0;
+      const extraIdx=lojasExtra.findIndex(x=>x.id===l.id);
+      const lojaIdx=LOJAS.findIndex(x=>x.id===l.id);
+      return `<div style="background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r4);padding:14px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+          <div style="font-weight:700">${l.n}</div>
+          <span class="rb ${regiaoClass(l.r)}" style="font-size:9px">${regiaoLabel(l.r)}</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${l.end||''}</div>
+        <div style="font-size:11px;color:var(--green);margin-bottom:8px">${l.w||''}</div>
+        <button onclick="${isExtra?`lojasExtra.splice(${extraIdx},1);localStorage.setItem('sushi_lojas_extra',JSON.stringify(lojasExtra));`:`LOJAS.splice(${lojaIdx},1);`}renderAdmin();renderLojas(cidadeSel);showN('🗑 Loja removida');" class="btn btn-ghost btn-sm" style="color:#ff6b6b;border-color:rgba(255,100,100,.2)">🗑 Remover</button>
+      </div>`;
+    }).join(''):'<div style="color:var(--muted);font-size:13px">Nenhuma loja cadastrada.</div>';
+  }
+}
+
+function importVendas(){
+  const raw=document.getElementById('imp-txt').value.trim();
+  if(!raw){showN('⚠️ Cole os dados primeiro!');return;}
+  const sem=document.getElementById('imp-sem').value;
+  const camp=document.getElementById('imp-camp').value||'UGC';
+  const linhas=raw.split('\n').filter(l=>l.trim());
+  let ok=0,erros=[];
+  linhas.forEach(linha=>{
+    const p=linha.split(/\t|,|;/).map(x=>x.trim());
+    if(p.length<2){erros.push(linha);return;}
+    const nq=p[0].toLowerCase();
+    const inf2=influ.find(i=>i.nome.toLowerCase().includes(nq)||nq.includes(i.nome.toLowerCase().split(' ')[0].toLowerCase()));
+    if(!inf2){erros.push(p[0]+' (não encontrada)');return;}
+    vendas.push({nome:inf2.nome,regiao:inf2.regiao,semana:sem,campanha:camp,pedidos:parseInt(p[1])||0,valor:parseFloat((p[2]||'0').replace(',','.'))||0,data:hoje()});
+    ok++;
+  });
+  saveAll();
+  const msg=`✅ ${ok} importado(s)!${erros.length?' ⚠️ Não encontradas: '+erros.join(', '):''}`;
+  document.getElementById('imp-result').style.display='block';
+  document.getElementById('imp-result').textContent=msg;
+  renderAdmin();showN(msg);
+  document.getElementById('imp-txt').value='';
+}
+
+// ========== MODAL ==========
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function abrirEditarPerfil(){
+  const inf = getInflu(_perfilAtualNome);
+  if(!inf) return;
+  document.getElementById('edit-perf-titulo').textContent = inf.nome;
+  document.getElementById('edit-perf-nome-original').value = inf.nome;
+  document.getElementById('ep-nome').value = inf.nome||'';
+  document.getElementById('ep-reg').value = inf.regiao||'';
+  document.getElementById('ep-insta').value = inf.insta||'';
+  document.getElementById('ep-tiktok').value = inf.tiktok||'';
+  document.getElementById('ep-wpp').value = inf.wpp||'';
+  document.getElementById('ep-cupom').value = inf.cupom||'';
+  document.getElementById('ep-qi').value = inf.qtInsta||'';
+  document.getElementById('ep-qt').value = inf.qtTiktok||'';
+  document.getElementById('ep-cpf').value = inf.cpf||'';
+  document.getElementById('ep-email').value = inf.email||'';
+  document.getElementById('ep-pix').value = inf.pix||'';
+  document.getElementById('ep-collab').value = inf.collab||'';
+  closeModal('modal-perfil');
+  document.getElementById('modal-editar-perfil').classList.add('open');
+}
+
+async function salvarEdicaoPerfil(){
+  const nomeOriginal = document.getElementById('edit-perf-nome-original').value;
+  const idx = influ.findIndex(i => i.nome === nomeOriginal);
+  if(idx < 0){ showN('⚠️ Influenciadora não encontrada!'); return; }
+  
+  const atualizado = {
+    ...influ[idx],
+    nome:    document.getElementById('ep-nome').value.trim()||influ[idx].nome,
+    regiao:  document.getElementById('ep-reg').value.trim().toLowerCase()||influ[idx].regiao,
+    insta:   document.getElementById('ep-insta').value.trim(),
+    tiktok:  document.getElementById('ep-tiktok').value.trim(),
+    wpp:     document.getElementById('ep-wpp').value.trim(),
+    cupom:   document.getElementById('ep-cupom').value.trim(),
+    qtInsta: document.getElementById('ep-qi').value.trim(),
+    qtTiktok:document.getElementById('ep-qt').value.trim(),
+    cpf:     document.getElementById('ep-cpf').value.trim(),
+    email:   document.getElementById('ep-email').value.trim(),
+    pix:     document.getElementById('ep-pix').value.trim(),
+    collab:  document.getElementById('ep-collab').value,
+  };
+  
+  influ[idx] = atualizado;
+  saveAll();
+  closeModal('modal-editar-perfil');
+  renderInflu();
+  showN('💾 Salvando na planilha...');
+
+  // Atualiza na planilha Google Sheets via Apps Script
+  // Estratégia: adiciona linha de UPDATE que sobrescreve os dados da influenciadora
+  try {
+    await writeToSheetAPI('Influenciadoras', [
+      atualizado.nome,
+      atualizado.regiao ? atualizado.regiao.toUpperCase() : '',
+      atualizado.insta||'',
+      atualizado.tiktok||'',
+      atualizado.wpp||'',
+      atualizado.cupom||'',
+      atualizado.qtInsta||'',
+      atualizado.qtTiktok||'',
+      atualizado.cpf||'',
+      atualizado.email||'',
+      atualizado.pix||'',
+      atualizado.collab||'',
+      atualizado.status||'Pendente',
+      atualizado.primeiro||'',
+      atualizado.obs||'',
+      new Date().toISOString().split('T')[0]
+    ]);
+    showN('✅ Perfil atualizado na planilha!');
+  } catch(e) {
+    showN('✅ Atualizado localmente. Sincronize a planilha manualmente se necessário.');
+  }
+}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+// ========== NOTIF ==========
+function showN(m){const n=document.getElementById('notif');n.textContent=m;n.classList.add('show');setTimeout(()=>n.classList.remove('show'),3500);}
+
+// ========== INIT ==========
+// Limpa apenas agendamentos e conteúdos (não influenciadoras)
+localStorage.removeItem('sushi_agend');
+localStorage.removeItem('sushi_cont');
+localStorage.removeItem('sushi_vendas');
+agendamentos = [];
+conteudos = [];
+vendas = [];
+// Influenciadoras: usa localStorage se existir, senão usa INFLU_DEFAULT
+if(!influ || influ.length === 0) influ = INFLU_DEFAULT;
+
+atualizarDatalistsRegioes();
+renderInflu();
+
+async function syncNow() {
+  setSyncStatus('syncing');
+  renderInflu();
+  const ok = await syncFromSheets();
+  if (ok) {
+    renderInflu();
+    renderConteudos();
+    renderVendas && renderVendas();
+    renderAdmin && renderAdmin();
+    showN('✅ Dados sincronizados com Google Sheets!');
+  } else {
+    showN('⚠️ Não foi possível sincronizar. Usando dados locais.');
+  }
+}
+
+// Sincroniza ao carregar
+syncFromSheets().then(ok => {
+  if (ok) {
+    renderInflu();
+    showN('✅ Dados carregados da planilha!');
+  }
+});
+</script>
+</body>
+</html>
