@@ -441,8 +441,8 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
       </div>
       <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
         <button class="btn btn-gold" onclick="addLoja()">➕ Adicionar Loja</button>
-        <button class="btn btn-ghost" onclick="seedLojasRede()" style="border-color:rgba(232,184,109,.3);color:var(--gold)">📦 Importar 39 lojas da rede</button>
-        <span style="font-size:11px;color:var(--muted)">Use uma vez para popular a rede; complete endereço/whatsapp/link em Admin → Gestão</span>
+        <button class="btn btn-ghost" onclick="seedLojasRede()" style="border-color:rgba(232,184,109,.3);color:var(--gold)">🔄 Importar/Atualizar 39 lojas da rede</button>
+        <span style="font-size:11px;color:var(--muted)">Sobrescreve com dados completos (Instagram, endereço, WhatsApp, link). Seguro re-rodar.</span>
       </div>
     </div>
 
@@ -1763,9 +1763,18 @@ const REGIOES_REDE = {
   sp:'São Paulo', mt:'Mato Grosso', go:'Goiás', rs:'Rio Grande do Sul',
 };
 
+// IDs que existiam em versões anteriores e foram renomeados — limpamos antes de re-importar
+const STALE_LOJA_IDS = ['sjp','pgdelivery','altoxv','saofranciscosul','mogicruzes','saojoseriopreto'];
+
 async function seedLojasRede(){
-  if(!confirm(`Importar ${LOJAS_REDE.length} lojas da rede com todos os dados (endereço, WhatsApp, Instagram, link de pedido)?\n\nSe alguma já existir, será atualizada.`)) return;
-  showN('💾 Importando lojas da rede... aguarde ~1 min');
+  if(!confirm(`Importar/atualizar ${LOJAS_REDE.length} lojas da rede com TODOS os dados (Instagram, endereço, WhatsApp, link de pedido)?\n\n• Lojas existentes serão sobrescritas com os dados novos\n• Divisão por região: CWB (12) · PR (6) · SC (10) · SP (7) · MT (2) · GO (1) · RS (1)\n• Pode ser executado várias vezes com segurança`)) return;
+  showN('💾 Limpando IDs antigos e importando... ~1 min');
+  // 0) Remove IDs órfãos de versões anteriores
+  for(const oldId of STALE_LOJA_IDS){
+    await writeToSheetAPI('Lojas', null, {action:'delete', sheet:'Lojas', key:oldId, col:0});
+    const i = LOJAS.findIndex(l=>l.id===oldId);
+    if(i>=0) LOJAS.splice(i,1);
+  }
   // 1) Garante que as regiões existem na planilha Regiões
   const regioesSalvas = JSON.parse(localStorage.getItem('sushi_regioes')||'{}');
   for(const [cod,nome] of Object.entries(REGIOES_REDE)){
@@ -1776,7 +1785,7 @@ async function seedLojasRede(){
   }
   localStorage.setItem('sushi_regioes', JSON.stringify(regioesSalvas));
   atualizarDatalistsRegioes();
-  // 2) Importa cada loja sequencialmente (evita corrida no Apps Script)
+  // 2) Importa cada loja sequencialmente (Apps Script atualiza por ID)
   let ok = 0, fail = 0;
   for(const seed of LOJAS_REDE){
     const loja = {
@@ -1790,9 +1799,14 @@ async function seedLojasRede(){
       [loja.id, loja.n, loja.r.toUpperCase(), loja.ig, loja.end, loja.w, loja.l, loja.status]);
     if(success) ok++; else fail++;
   }
-  showN(`✅ ${ok} lojas importadas${fail?` (${fail} falharam — repita o seed)`:''}`);
+  // Limpa lojasExtra (estavam no localStorage de testes anteriores)
+  lojasExtra = [];
+  localStorage.setItem('sushi_lojas_extra', JSON.stringify(lojasExtra));
+  showN(`✅ ${ok} lojas atualizadas${fail?` (${fail} falharam — repita o seed)`:''}. Recarregue a página em 5s.`);
   renderAdmin();
   renderCidadesBtns();
+  // Re-sync para garantir que leu do sheet limpo
+  setTimeout(()=>syncFromSheets().then(()=>{ renderAdmin(); renderCidadesBtns(); }), 5000);
 }
 
 // ========== EDITAR LOJA ==========
