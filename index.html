@@ -652,10 +652,37 @@ async function writeToSheet(sheetName, row) {
   return writeToSheetAPI(sheetName, row);
 }
 
-// Lê dados via JSONP (contorna CORS do GitHub Pages)
-function readFromAPI(sheetName) {
+// Lê via gviz (endpoint público do Sheets, mais confiável que Apps Script)
+async function readFromGviz(sheetName) {
+  try {
+    const url = SHEET_BASE + encodeURIComponent(sheetName) + '&headers=1&t=' + Date.now();
+    const r = await fetch(url, {cache: 'no-store'});
+    if (!r.ok) return null;
+    const txt = await r.text();
+    const start = txt.indexOf('({');
+    const end = txt.lastIndexOf('})');
+    if (start < 0 || end < 0) return null;
+    const d = JSON.parse(txt.substring(start+1, end+1));
+    if (d.status !== 'ok' || !d.table) return null;
+    const headers = d.table.cols.map(c => c.label || c.id);
+    return d.table.rows.map(r => {
+      const obj = {};
+      r.c.forEach((cell, i) => {
+        obj[headers[i]] = cell ? (cell.v == null ? '' : String(cell.v)) : '';
+      });
+      return obj;
+    });
+  } catch(e) { return null; }
+}
+
+// Lê dados: tenta gviz (público) primeiro; se falhar, cai pro Apps Script via JSONP
+async function readFromAPI(sheetName) {
+  // gviz funciona pra qualquer aba pública sem precisar de Apps Script
+  const gvizData = await readFromGviz(sheetName);
+  if (gvizData && gvizData.length > 0) return gvizData;
+  // Fallback JSONP (caso gviz falhe ou aba esteja restrita)
   return new Promise((resolve) => {
-    const cbName = 'cb_' + Date.now();
+    const cbName = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
     const script = document.createElement('script');
     let done = false;
     const timer = setTimeout(() => {
