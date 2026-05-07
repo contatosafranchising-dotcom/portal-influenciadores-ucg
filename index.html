@@ -439,7 +439,11 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
         <div class="fi"><label>WhatsApp</label><input type="text" id="l-wpp" placeholder="(XX) 9XXXX-XXXX"></div>
         <div class="fi"><label>Link de pedido</label><input type="url" id="l-link" placeholder="https://delivery..."></div>
       </div>
-      <div style="margin-top:14px"><button class="btn btn-gold" onclick="addLoja()">➕ Adicionar Loja</button></div>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-gold" onclick="addLoja()">➕ Adicionar Loja</button>
+        <button class="btn btn-ghost" onclick="seedLojasRede()" style="border-color:rgba(232,184,109,.3);color:var(--gold)">📦 Importar 39 lojas da rede</button>
+        <span style="font-size:11px;color:var(--muted)">Use uma vez para popular a rede; complete endereço/whatsapp/link em Admin → Gestão</span>
+      </div>
     </div>
 
     <!-- LISTA INFLUENCIADORAS -->
@@ -561,6 +565,37 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
     <div class="mf">
       <button class="btn btn-ghost" onclick="closeModal('modal-editar-perfil')">Cancelar</button>
       <button class="btn btn-red" onclick="salvarEdicaoPerfil()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDITAR LOJA -->
+<div class="overlay" id="modal-editar-loja">
+  <div class="modal">
+    <div class="mhead">
+      <div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:4px">EDITAR LOJA</div>
+        <h2 id="el-titulo" style="font-size:16px;font-weight:700"></h2>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-editar-loja')">×</button>
+    </div>
+    <div class="mb">
+      <input type="hidden" id="el-id">
+      <div class="fg">
+        <div class="fst">📍 Dados da Loja</div>
+        <div class="fi"><label>Nome da loja</label><input type="text" id="el-nome"></div>
+        <div class="fi"><label>Região (código UF)</label>
+          <input type="text" id="el-reg" list="regioes-list" placeholder="pr / sc / sp...">
+        </div>
+        <div class="fi"><label>Instagram</label><input type="text" id="el-ig" placeholder="@perfil"></div>
+        <div class="fi form-full"><label>Endereço completo</label><input type="text" id="el-end" placeholder="Rua, número, bairro, cidade - UF, CEP"></div>
+        <div class="fi"><label>WhatsApp</label><input type="text" id="el-wpp" placeholder="(XX) 9XXXX-XXXX"></div>
+        <div class="fi"><label>Link de pedido</label><input type="url" id="el-link" placeholder="https://delivery..."></div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-editar-loja')">Cancelar</button>
+      <button class="btn btn-gold" onclick="salvarEdicaoLoja()">💾 Salvar</button>
     </div>
   </div>
 </div>
@@ -1201,20 +1236,25 @@ function selecionarCidade(r,btn){
 function renderLojas(r){
   const grid=document.getElementById('lojas-grid');
   const lista=getAllLojas().filter(l=>l.r===r);
-  grid.innerHTML=lista.map(l=>`
-    <div class="loja-sel" id="loja-card-${l.id}" onclick="selecionarLoja('${l.id}')">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
-        <div class="loja-sel-name">${l.n}</div>
-        <span class="rb ${regiaoClass(r)}" style="flex-shrink:0;margin-left:8px">${regiaoLabel(r)}</span>
+  grid.innerHTML=lista.map(l=>{
+    const bloqueada = l.status==='bloqueada';
+    const semInfo = !l.end && !l.w && !l.l;
+    const click = bloqueada ? `onclick="showN('🔒 Loja bloqueada para agendamentos no momento.')"` : `onclick="selecionarLoja('${l.id}')"`;
+    return `
+    <div class="loja-sel" id="loja-card-${l.id}" ${click} style="${bloqueada?'opacity:0.45;cursor:not-allowed;border-color:rgba(243,156,18,.3);':''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:8px">
+        <div class="loja-sel-name">${l.n} ${bloqueada?'<span style=\'font-size:10px;color:#ffa500;margin-left:4px\'>🔒 Bloqueada</span>':''}</div>
+        <span class="rb ${regiaoClass(r)}" style="flex-shrink:0">${regiaoLabel(r)}</span>
       </div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:3px">${l.ig}</div>
-      <div class="loja-sel-end">${l.end}</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-        ${l.l?`<a href="${l.l}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:var(--rl);text-decoration:none;padding:3px 8px;border:1px solid rgba(200,16,46,.25);border-radius:2px">🛒 Pedir</a>`:''}
-        <span class="loja-sel-wpp">💬 ${l.w}</span>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:3px">${l.ig||'<span style=\"color:#ffa500\">⚠️ Sem Instagram</span>'}</div>
+      <div class="loja-sel-end">${l.end||'<span style=\"color:#ffa500\">⚠️ Endereço não cadastrado</span>'}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center">
+        ${l.l?`<a href="${l.l}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:var(--rl);text-decoration:none;padding:3px 8px;border:1px solid rgba(200,16,46,.25);border-radius:2px">🛒 Pedir</a>`:'<span style=\"font-size:10px;color:#ffa500\">⚠️ Sem link</span>'}
+        ${l.w?`<span class="loja-sel-wpp">💬 ${l.w}</span>`:'<span style=\"font-size:10px;color:#ffa500\">⚠️ Sem WhatsApp</span>'}
+        ${semInfo?'<span style=\"font-size:10px;color:#ffa500;margin-left:auto\">Complete os dados em Admin → Gestão</span>':''}
       </div>
     </div>
-  `).join('');
+  `;}).join('');
 }
 
 function selecionarLoja(id){
@@ -1514,10 +1554,20 @@ async function addInflu(){
   };
   influ.push(nova);
   saveAll();
+  // Garante que a região aparece no filtro mesmo se ainda não tiver loja cadastrada
+  const regioesSalvas = JSON.parse(localStorage.getItem('sushi_regioes')||'{}');
+  if(regiao && !regioesSalvas[regiao]){
+    regioesSalvas[regiao] = regiao.toUpperCase();
+    localStorage.setItem('sushi_regioes', JSON.stringify(regioesSalvas));
+    writeToSheetAPI('Regiões', [regiao, regioesSalvas[regiao]]);
+  }
   ['n-nome','n-insta','n-tiktok','n-wpp','n-cupom','n-qi','n-qt','n-cpf','n-email','n-pix'].forEach(id=>document.getElementById(id).value='');
   showN('💾 Salvando na planilha...');
   renderAdmin();
   renderInflu();
+  renderFiltrosEstados();
+  renderCidadesBtns();
+  atualizarDatalistsRegioes();
   // Grava na planilha
   try {
     await writeToSheetAPI('Influenciadoras', [
@@ -1650,9 +1700,141 @@ function addLoja(){
   atualizarDatalistsRegioes();
   // Grava nova loja na planilha
   const novaLoja = lojasExtra[lojasExtra.length-1];
-  writeToSheetAPI('Lojas', [novaLoja.id, novaLoja.n, novaLoja.r.toUpperCase(), novaLoja.ig||'', novaLoja.end||'', novaLoja.w||'', novaLoja.l||'']);
+  novaLoja.status = 'ativa';
+  writeToSheetAPI('Lojas', [novaLoja.id, novaLoja.n, novaLoja.r.toUpperCase(), novaLoja.ig||'', novaLoja.end||'', novaLoja.w||'', novaLoja.l||'', 'ativa']);
   showN('✅ Loja adicionada!');
   renderAdmin();
+  renderCidadesBtns();
+}
+
+// ========== LOJAS PRÉ-CARREGADAS DA REDE ==========
+const LOJAS_REDE = [
+  // PR
+  {id:'sjp', n:'São José dos Pinhais', r:'pr'},
+  {id:'pontagrossa', n:'Ponta Grossa', r:'pr'},
+  {id:'merces', n:'Mercês', r:'pr'},
+  {id:'novomundo', n:'Novo Mundo', r:'pr'},
+  {id:'fazendariogrande', n:'Fazenda Rio Grande', r:'pr'},
+  {id:'paranagua', n:'Paranaguá', r:'pr'},
+  {id:'sitiocercado', n:'Sítio Cercado', r:'pr'},
+  {id:'castro', n:'Castro', r:'pr'},
+  {id:'colombo', n:'Colombo', r:'pr'},
+  {id:'palmeira', n:'Palmeira', r:'pr'},
+  {id:'saobraz', n:'São Bráz', r:'pr'},
+  {id:'pgdelivery', n:'Ponta Grossa Delivery', r:'pr'},
+  {id:'santacandida', n:'Santa Cândida', r:'pr'},
+  {id:'altoxv', n:'Alto da XV', r:'pr', status:'bloqueada'},
+  {id:'araucaria', n:'Araucária', r:'pr'},
+  {id:'pinhais', n:'Pinhais', r:'pr'},
+  {id:'maringa', n:'Maringá', r:'pr'},
+  {id:'cwbdelivery', n:'CWB Delivery', r:'pr'},
+  // SC
+  {id:'saobentosul', n:'São Bento do Sul', r:'sc'},
+  {id:'tubarao', n:'Tubarão', r:'sc'},
+  {id:'gaspar', n:'Gaspar', r:'sc'},
+  {id:'camboriu', n:'Camboriú', r:'sc'},
+  {id:'itapema', n:'Itapema', r:'sc'},
+  {id:'navegantes', n:'Navegantes', r:'sc'},
+  {id:'saofranciscosul', n:'São Francisco do Sul', r:'sc'},
+  {id:'florianopolis', n:'Florianópolis', r:'sc'},
+  {id:'saojosesc', n:'São José - SC', r:'sc'},
+  {id:'jaraguasul', n:'Jaraguá do Sul', r:'sc'},
+  // SP
+  {id:'itapolis', n:'Itápolis', r:'sp'},
+  {id:'americana', n:'Americana', r:'sp'},
+  {id:'saojoseriopreto', n:'São José do Rio Preto', r:'sp'},
+  {id:'mogicruzes', n:'Mogi das Cruzes', r:'sp'},
+  {id:'santos', n:'Santos', r:'sp'},
+  {id:'indaiatuba', n:'Indaiatuba', r:'sp'},
+  {id:'analiafranco', n:'Anália Franco', r:'sp'},
+  // MT
+  {id:'rondonopolis', n:'Rondonópolis', r:'mt'},
+  {id:'sinop', n:'Sinop', r:'mt'},
+  // GO
+  {id:'goiania', n:'Goiânia', r:'go'},
+  // RS
+  {id:'erechim', n:'Erechim', r:'rs'},
+];
+const REGIOES_REDE = {
+  pr:'Paraná', sc:'Santa Catarina', sp:'São Paulo',
+  mt:'Mato Grosso', go:'Goiás', rs:'Rio Grande do Sul',
+};
+
+async function seedLojasRede(){
+  if(!confirm(`Importar ${LOJAS_REDE.length} lojas da rede para o portal?\n\nSe alguma já existir, será atualizada.\nVocê poderá completar endereço, WhatsApp e link de pedido depois.`)) return;
+  showN('💾 Importando lojas da rede... aguarde');
+  // 1) Garante que as 6 regiões existem
+  const regioesSalvas = JSON.parse(localStorage.getItem('sushi_regioes')||'{}');
+  for(const [cod,nome] of Object.entries(REGIOES_REDE)){
+    if(!regioesSalvas[cod]){
+      regioesSalvas[cod] = nome;
+      await writeToSheetAPI('Regiões', [cod, nome]);
+    }
+  }
+  localStorage.setItem('sushi_regioes', JSON.stringify(regioesSalvas));
+  atualizarDatalistsRegioes();
+  // 2) Importa cada loja sequencialmente (evita corrida na planilha)
+  let ok = 0, fail = 0;
+  for(const seed of LOJAS_REDE){
+    const loja = {
+      id: seed.id, n: seed.n, r: seed.r,
+      ig:'', end:'', w:'', l:'',
+      status: seed.status || 'ativa',
+    };
+    // Atualiza memória local
+    const idx = LOJAS.findIndex(l=>l.id===loja.id);
+    if(idx>=0) LOJAS[idx] = loja; else LOJAS.push(loja);
+    // Persiste na planilha
+    const success = await writeToSheetAPI('Lojas',
+      [loja.id, loja.n, loja.r.toUpperCase(), '', '', '', '', loja.status]);
+    if(success) ok++; else fail++;
+  }
+  showN(`✅ ${ok} lojas importadas${fail?` (${fail} falharam — reabra Admin e tente de novo)`:''}`);
+  renderAdmin();
+  renderCidadesBtns();
+}
+
+// ========== EDITAR LOJA ==========
+let _editandoLojaId = null;
+function abrirEditarLoja(id){
+  const l = getAllLojas().find(x=>x.id===id);
+  if(!l){showN('⚠️ Loja não encontrada');return;}
+  _editandoLojaId = id;
+  document.getElementById('el-titulo').textContent = l.n;
+  document.getElementById('el-id').value = l.id;
+  document.getElementById('el-nome').value = l.n||'';
+  document.getElementById('el-reg').value = l.r||'';
+  document.getElementById('el-ig').value = l.ig||'';
+  document.getElementById('el-end').value = l.end||'';
+  document.getElementById('el-wpp').value = l.w||'';
+  document.getElementById('el-link').value = l.l||'';
+  document.getElementById('modal-editar-loja').classList.add('open');
+}
+
+async function salvarEdicaoLoja(){
+  const id = _editandoLojaId;
+  if(!id) return;
+  const lojaIdx = LOJAS.findIndex(l=>l.id===id);
+  const extraIdx = lojasExtra.findIndex(l=>l.id===id);
+  const loja = lojaIdx>=0 ? LOJAS[lojaIdx] : (extraIdx>=0 ? lojasExtra[extraIdx] : null);
+  if(!loja){showN('⚠️ Loja não encontrada');return;}
+  loja.n = document.getElementById('el-nome').value.trim() || loja.n;
+  loja.r = (document.getElementById('el-reg').value.trim()||loja.r).toLowerCase();
+  loja.ig = document.getElementById('el-ig').value.trim();
+  loja.end = document.getElementById('el-end').value.trim();
+  loja.w = document.getElementById('el-wpp').value.trim();
+  loja.l = document.getElementById('el-link').value.trim();
+  if(lojaIdx>=0) LOJAS[lojaIdx] = loja;
+  if(extraIdx>=0){ lojasExtra[extraIdx] = loja; localStorage.setItem('sushi_lojas_extra', JSON.stringify(lojasExtra)); }
+  showN('💾 Salvando na planilha...');
+  const success = await writeToSheetAPI('Lojas',
+    [loja.id, loja.n, loja.r.toUpperCase(), loja.ig||'', loja.end||'', loja.w||'', loja.l||'', loja.status||'ativa']);
+  closeModal('modal-editar-loja');
+  _editandoLojaId = null;
+  showN(success?'✅ Loja atualizada!':'⚠️ Atualizada local; falha ao gravar na planilha');
+  renderAdmin();
+  renderLojas(cidadeSel);
+  renderCidadesBtns();
 }
 
 // ========== RESULTADOS ==========
@@ -1785,7 +1967,9 @@ function renderAdmin(){
         </div>
         <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${l.end||''}</div>
         <div style="font-size:11px;color:var(--green);margin-bottom:8px">${l.w||''}</div>
+        ${(!l.end||!l.w||!l.l)?'<div style="font-size:10px;color:#ffa500;margin-bottom:6px">⚠️ Faltam dados: '+[!l.end?'endereço':null,!l.w?'WhatsApp':null,!l.l?'link de pedido':null].filter(Boolean).join(', ')+'</div>':''}
         <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button onclick="abrirEditarLoja('${l.id}')" class="btn btn-ghost btn-sm" style="color:var(--gold);border-color:rgba(232,184,109,.3)">✏️ Editar</button>
           <button onclick="toggleBloqueioLoja('${l.id}')" class="btn btn-ghost btn-sm" style="color:${bloqueada?'#2ecc71':'#ffa500'};border-color:rgba(255,165,0,.2)">${bloqueada?'🔓 Desbloquear':'🔒 Bloquear'}</button>
           <button onclick="removerLoja('${l.id}','${l.n.replace(/'/g,"\\'")}');" class="btn btn-ghost btn-sm" style="color:#ff6b6b;border-color:rgba(255,100,100,.2)">🗑 Remover</button>
         </div>
