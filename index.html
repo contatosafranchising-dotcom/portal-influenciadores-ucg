@@ -1708,88 +1708,89 @@ function addLoja(){
 }
 
 // ========== LOJAS PRÉ-CARREGADAS DA REDE ==========
+// Dados completos vindos do Excel "informações das lojas.xlsx"
+// Divisão: CWB (Curitiba e RM) + PR (interior) + estados separados
 const LOJAS_REDE = [
-  // PR
-  {id:'sjp', n:'São José dos Pinhais', r:'pr'},
-  {id:'pontagrossa', n:'Ponta Grossa', r:'pr'},
-  {id:'merces', n:'Mercês', r:'pr'},
-  {id:'novomundo', n:'Novo Mundo', r:'pr'},
-  {id:'fazendariogrande', n:'Fazenda Rio Grande', r:'pr'},
-  {id:'paranagua', n:'Paranaguá', r:'pr'},
-  {id:'sitiocercado', n:'Sítio Cercado', r:'pr'},
-  {id:'castro', n:'Castro', r:'pr'},
-  {id:'colombo', n:'Colombo', r:'pr'},
-  {id:'palmeira', n:'Palmeira', r:'pr'},
-  {id:'saobraz', n:'São Bráz', r:'pr'},
-  {id:'pgdelivery', n:'Ponta Grossa Delivery', r:'pr'},
-  {id:'santacandida', n:'Santa Cândida', r:'pr'},
-  {id:'altoxv', n:'Alto da XV', r:'pr', status:'bloqueada'},
-  {id:'araucaria', n:'Araucária', r:'pr'},
-  {id:'pinhais', n:'Pinhais', r:'pr'},
-  {id:'maringa', n:'Maringá', r:'pr'},
-  {id:'cwbdelivery', n:'CWB Delivery', r:'pr'},
-  // SC
-  {id:'saobentosul', n:'São Bento do Sul', r:'sc'},
-  {id:'tubarao', n:'Tubarão', r:'sc'},
-  {id:'gaspar', n:'Gaspar', r:'sc'},
-  {id:'camboriu', n:'Camboriú', r:'sc'},
-  {id:'itapema', n:'Itapema', r:'sc'},
-  {id:'navegantes', n:'Navegantes', r:'sc'},
-  {id:'saofranciscosul', n:'São Francisco do Sul', r:'sc'},
-  {id:'florianopolis', n:'Florianópolis', r:'sc'},
-  {id:'saojosesc', n:'São José - SC', r:'sc'},
-  {id:'jaraguasul', n:'Jaraguá do Sul', r:'sc'},
-  // SP
-  {id:'itapolis', n:'Itápolis', r:'sp'},
-  {id:'americana', n:'Americana', r:'sp'},
-  {id:'saojoseriopreto', n:'São José do Rio Preto', r:'sp'},
-  {id:'mogicruzes', n:'Mogi das Cruzes', r:'sp'},
-  {id:'santos', n:'Santos', r:'sp'},
-  {id:'indaiatuba', n:'Indaiatuba', r:'sp'},
-  {id:'analiafranco', n:'Anália Franco', r:'sp'},
-  // MT
-  {id:'rondonopolis', n:'Rondonópolis', r:'mt'},
-  {id:'sinop', n:'Sinop', r:'mt'},
-  // GO
-  {id:'goiania', n:'Goiânia', r:'go'},
-  // RS
-  {id:'erechim', n:'Erechim', r:'rs'},
+  // CWB (Curitiba e Região Metropolitana)
+  {id:'sjpinhais', n:'São José dos Pinhais', r:'cwb', ig:'@sacasadosushisaojosedospinhais', end:'R. Barão do Cerro Azul, 1164 - Centro, São José dos Pinhais - PR, 83005-430', w:'(41) 99922-0366', l:'https://delivery.livn.com.br/sacasadosushisjp'},
+  {id:'merces', n:'Mercês', r:'cwb', ig:'@sacasadosushimerces', end:'R. Profa. Rosa Saporski 151 - Mercês, Curitiba - PR', w:'(41) 99117-3763', l:'https://delivery.livn.com.br/sacasadosushicuritibamerces'},
+  {id:'novomundo', n:'Novo Mundo', r:'cwb', ig:'@sacasadosushinovomundo', end:'R. Cap. Tenente Maris de Barros 313 - Portão, Curitiba - PR', w:'(41) 99879-5881', l:'https://delivery.livn.com.br/sacasadosushinovomundo'},
+  {id:'fazendariogrande', n:'Fazenda Rio Grande', r:'cwb', ig:'@sacasadosushifazendariogrande', end:'Av. Brasil 2057 - Nações, Fazenda Rio Grande - PR', w:'(41) 99847-6128', l:'https://delivery.livn.com.br/sacasadosushifazendariogrande'},
+  {id:'sitiocercado', n:'Sítio Cercado', r:'cwb', ig:'@sacasadosushisitiocercado', end:'R. Professora Luíza Borges Fanini 272 - Sítio Cercado, Curitiba - PR', w:'(41) 99624-9340', l:'https://delivery.livn.com.br/sasitiocercado'},
+  {id:'colombo', n:'Colombo', r:'cwb', ig:'@sacasadosushicolombo', end:'R. Genésio Moreschi - Guaraituba, Colombo - PR', w:'(41) 98780-9629', l:'https://delivery.livn.com.br/sacolombo'},
+  {id:'saobraz', n:'São Bráz', r:'cwb', ig:'@sacasadosushisaobraz', end:'Av. Três Marias 182 - São Braz, Curitiba - PR', w:'(41) 98774-3195', l:'https://delivery.livn.com.br/sacasadosushisaobraz'},
+  {id:'santacandida', n:'Santa Cândida', r:'cwb', ig:'@sacasadosushisantacandida', end:'Av. Mal. Mascarenhas de Moraes 944 - Atuba, Curitiba - PR', w:'(41) 98898-5675', l:'https://delivery.livn.com.br/sacasadosushisantacandida'},
+  {id:'altodaxv', n:'Alto da XV', r:'cwb', ig:'@sacasadosushialtodaxv', end:'R. Camões 422 - Alto da XV, Curitiba - PR', w:'(41) 99561-1488', l:'https://delivery.livn.com.br/sa-alto-da-xv', status:'bloqueada'},
+  {id:'araucaria', n:'Araucária', r:'cwb', ig:'@sacasadosushiaraucaria', end:'Av. Dr. Vítor do Amaral 374 - Centro, Araucária - PR', w:'(41) 99898-3891', l:'https://delivery.livn.com.br/sacasadosushiaraucaria'},
+  {id:'pinhais', n:'Pinhais', r:'cwb', ig:'@sacasadosushipinhais', end:'Rua Reinaldo Ribas 830 - Atuba, Pinhais - PR', w:'(41) 98853-8224', l:'https://delivery.livn.com.br/sacasadosushipinhais'},
+  {id:'cwbdelivery', n:'CWB Delivery', r:'cwb', ig:'@sacasadosushicwbdelivery', end:'R. Omílio Monteiro Soares 1519 - Fanny, Curitiba - PR', w:'(41) 99191-1519', l:'https://link.vocepede.online/sacwbdelivery'},
+  // PR (interior do Paraná)
+  {id:'pontagrossa', n:'Ponta Grossa', r:'pr', ig:'@sacasadosushipontagrossa', end:'R. Cel. Francisco Ribas, 327 - Centro, Ponta Grossa - PR, 84010-260', w:'(42) 99990-3726', l:'https://delivery.livn.com.br/sasushipontagrossa'},
+  {id:'paranagua', n:'Paranaguá', r:'pr', ig:'@sacasadosushiparanagua', end:'R. Manoel Corrêa, 2450 - Palmital, Paranaguá - PR, 83206-080', w:'(41) 99188-3200', l:'https://link.vocepede.online/sacasadosushiparanagua'},
+  {id:'castro', n:'Castro', r:'pr', ig:'@sacasadosushicastro', end:'Praça - R. Pedro Kaled, 12 - Largo da Prefeitura, Castro - PR, 84165-540', w:'(42) 99926-1164', l:'https://link.vocepede.online/sa-castro'},
+  {id:'palmeira', n:'Palmeira', r:'pr', ig:'@sacasadosushipalmeira', end:'R. Conceição, 72 - Centro, Palmeira - PR, 84130-000', w:'(42) 99859-1807', l:'https://delivery.livn.com.br/sasushipalmeira'},
+  {id:'pontagrossadel', n:'Ponta Grossa Delivery', r:'pr', ig:'@sacasadosushipontagrossadel', end:'R. Santa Rita Durão, 95, Ponta Grossa - PR', w:'(42) 98113-308', l:'https://delivery.livn.com.br/sapontagrossadelivery'},
+  {id:'maringa', n:'Maringá', r:'pr', ig:'@sacasadosushimaringa', end:'Av. Itororó, 157 - Zona 02, Maringá - PR, 87010-460', w:'(44) 99132-6249', l:'https://delivery.livn.com.br/sa.maringa'},
+  // SC (Santa Catarina)
+  {id:'saobentosul', n:'São Bento do Sul', r:'sc', ig:'@sacasadosushibillyjhow', end:'R. Antônio Kaesemodel, N° 1526 - Rio Negro, São Bento do Sul - SC, 89287-650', w:'(47) 9928-0409', l:'https://delivery.livn.com.br/sacasasushibillyjhow'},
+  {id:'tubarao', n:'Tubarão', r:'sc', ig:'@sacasadosushitubarao', end:'Av. Patrício Lima, 877 - Humaitá, Tubarão - SC, 88704-410', w:'(48) 98866-4456', l:'https://delivery.livn.com.br/sasushitubarao'},
+  {id:'gaspar', n:'Gaspar', r:'sc', ig:'@sacasadosushigaspar', end:'R. Barão do Rio Branco, 1598 - Santa Terezinha, Gaspar - SC, 89114-139', w:'(47) 99110-9932', l:'https://delivery.livn.com.br/sacasadosushigaspardelivery'},
+  {id:'camboriu', n:'Camboriú', r:'sc', ig:'@sacasadosushicamboriu', end:'R. 3100, 969 - sala 2 - Centro, Balneário Camboriú - SC, 88330-304', w:'(47) 99964-4590', l:'https://delivery.livn.com.br/sa-camboriu'},
+  {id:'itapema', n:'Itapema', r:'sc', ig:'@sacasadosushiitapema', end:'Av. Nereu Ramos, 2880 - Meia Praia, Itapema - SC, 88220-971', w:'(47) 99945-8585', l:'https://link.vocepede.online/sa-itapema'},
+  {id:'navegantes', n:'Navegantes', r:'sc', ig:'@sacasadosushinavegantes', end:'R. Gracilides Coelho Reiser, 228 - São Domingos, Navegantes - SC, 88370-552', w:'(47) 99724-8138', l:'https://delivery.livn.com.br/sacasadosushinavegantes'},
+  {id:'saofrancisco', n:'São Francisco do Sul', r:'sc', ig:'@sacasadosushisaofranciscodosul', end:'R. Barão do Rio Branco, 575 - Villa Park, São Francisco do Sul - SC, 89240-000', w:'(47) 98890-6469', l:'https://delivery.livn.com.br/sacasadosushisaofrancisco'},
+  {id:'florianopolis', n:'Florianópolis', r:'sc', ig:'@sayakinikufloripa', end:'Av. Pref. Acácio Garibaldi São Thiago, 141 - Lagoa da Conceição, Florianópolis - SC, 88062-600', w:'(48) 99180-716', l:''},
+  {id:'saojosesc', n:'São José - SC', r:'sc', ig:'@sacasadosushisaojosesc', end:'Av. Salvador di Bernardi, 914 - Campinas, São José - SC, 88101-260', w:'(48) 98808-6457', l:'https://delivery.livn.com.br/sacasadosushisaojose'},
+  {id:'jaraguasul', n:'Jaraguá do Sul', r:'sc', ig:'@sacasadosushijaraguadosul', end:'Av. Mal. Deodoro da Fonseca, 1384 - Centro, Jaraguá do Sul - SC, 89251-700', w:'(47) 3084-7370', l:'https://link.vocepede.online/sa_jgs'},
+  // SP (São Paulo)
+  {id:'itapolis', n:'Itápolis', r:'sp', ig:'@sacasadosushiitapolisdelivery', end:'Av. Sete de Setembro, 37 - Centro, Itápolis - SP, 14900-000', w:'(16) 99308-9570', l:'https://delivery.livn.com.br/sa-itapolis'},
+  {id:'americana', n:'Americana', r:'sp', ig:'@sacasadosushiamericanadelivery', end:'Av. Da Amizade 1235, Americana - SP', w:'(19) 97139-0084', l:'https://delivery.livn.com.br/saamericana'},
+  {id:'saojoseriopreto', n:'São José do Rio Preto', r:'sp', ig:'@sayakinikusjdoriopreto', end:'R. Siqueira Campos, 3700 - Vila Santa Cruz, São José do Rio Preto - SP, 15014-030', w:'(17) 98135-6292', l:'https://delivery.livn.com.br/sasushiriopreto'},
+  {id:'mogidascruzes', n:'Mogi das Cruzes', r:'sp', ig:'@sayakinikumogi', end:'Av. Cap. Manoel Rudge, 615 - Vila Oliveira, Mogi das Cruzes - SP, 08780-290', w:'(11) 99245-0051', l:'https://delivery.livn.com.br/yakinikumogidascruzes'},
+  {id:'santos', n:'Santos', r:'sp', ig:'@sayakinikusantos', end:'Av. Conselheiro Nébias, 581 - Boqueirão, Santos - SP, 11045-003', w:'(13) 99808-0085', l:'https://delivery.livn.com.br/yakinikusantos'},
+  {id:'indaiatuba', n:'Indaiatuba', r:'sp', ig:'@sayakinikuindaiatuba', end:'R. Quinze de Novembro, 1452 - Centro, Indaiatuba - SP, 13330-070', w:'(19) 99833-1233', l:'https://delivery.livn.com.br/saindaiatuba'},
+  {id:'analiafranco', n:'Anália Franco', r:'sp', ig:'@sayakinikujardimanalia', end:'R. Emília Marengo, 341 - Jardim Anália Franco, São Paulo - SP, 03336-000', w:'(11) 96740-1511', l:'https://delivery.livn.com.br/sacasadosushianaliafranco'},
+  // MT (Mato Grosso)
+  {id:'rondonopolis', n:'Rondonópolis', r:'mt', ig:'@sacasadosushirondonopolis', end:'Av. Gov. Júlio José de Campos, 2022 - Parque Sagrada Família, Rondonópolis - MT, 78735-330', w:'(66) 99232-8123', l:'https://delivery.livn.com.br/sarondonopolis'},
+  {id:'sinop', n:'Sinop', r:'mt', ig:'@sayakinikusinop', end:'Avenida dos Ingás, 1545 - Jardim Maringá 2, Sinop - MT, 78556-246', w:'(66) 99680-7666', l:'https://delivery.livn.com.br/sasinop'},
+  // GO (Goiás)
+  {id:'goiania', n:'Goiânia', r:'go', ig:'@sayakinikugoiania', end:'R. 9, 1099 - St. Oeste, Goiânia - GO, 74120-010', w:'(62) 99945-1099', l:'https://delivery.livn.com.br/sayakinikugodelivery'},
+  // RS (Rio Grande do Sul)
+  {id:'erechim', n:'Erechim', r:'rs', ig:'@sayakinikuerechim', end:'Av. Tiradentes, 509 - Centro, Erechim - RS, 99700-000', w:'(54) 99164-6404', l:'https://delivery.livn.com.br/saerechim'},
 ];
 const REGIOES_REDE = {
-  pr:'Paraná', sc:'Santa Catarina', sp:'São Paulo',
-  mt:'Mato Grosso', go:'Goiás', rs:'Rio Grande do Sul',
+  cwb:'Curitiba & Região', pr:'Paraná (interior)', sc:'Santa Catarina',
+  sp:'São Paulo', mt:'Mato Grosso', go:'Goiás', rs:'Rio Grande do Sul',
 };
 
 async function seedLojasRede(){
-  if(!confirm(`Importar ${LOJAS_REDE.length} lojas da rede para o portal?\n\nSe alguma já existir, será atualizada.\nVocê poderá completar endereço, WhatsApp e link de pedido depois.`)) return;
-  showN('💾 Importando lojas da rede... aguarde');
-  // 1) Garante que as 6 regiões existem
+  if(!confirm(`Importar ${LOJAS_REDE.length} lojas da rede com todos os dados (endereço, WhatsApp, Instagram, link de pedido)?\n\nSe alguma já existir, será atualizada.`)) return;
+  showN('💾 Importando lojas da rede... aguarde ~1 min');
+  // 1) Garante que as regiões existem na planilha Regiões
   const regioesSalvas = JSON.parse(localStorage.getItem('sushi_regioes')||'{}');
   for(const [cod,nome] of Object.entries(REGIOES_REDE)){
-    if(!regioesSalvas[cod]){
+    if(!regioesSalvas[cod] || regioesSalvas[cod]!==nome){
       regioesSalvas[cod] = nome;
       await writeToSheetAPI('Regiões', [cod, nome]);
     }
   }
   localStorage.setItem('sushi_regioes', JSON.stringify(regioesSalvas));
   atualizarDatalistsRegioes();
-  // 2) Importa cada loja sequencialmente (evita corrida na planilha)
+  // 2) Importa cada loja sequencialmente (evita corrida no Apps Script)
   let ok = 0, fail = 0;
   for(const seed of LOJAS_REDE){
     const loja = {
       id: seed.id, n: seed.n, r: seed.r,
-      ig:'', end:'', w:'', l:'',
+      ig: seed.ig||'', end: seed.end||'', w: seed.w||'', l: seed.l||'',
       status: seed.status || 'ativa',
     };
-    // Atualiza memória local
     const idx = LOJAS.findIndex(l=>l.id===loja.id);
     if(idx>=0) LOJAS[idx] = loja; else LOJAS.push(loja);
-    // Persiste na planilha
     const success = await writeToSheetAPI('Lojas',
-      [loja.id, loja.n, loja.r.toUpperCase(), '', '', '', '', loja.status]);
+      [loja.id, loja.n, loja.r.toUpperCase(), loja.ig, loja.end, loja.w, loja.l, loja.status]);
     if(success) ok++; else fail++;
   }
-  showN(`✅ ${ok} lojas importadas${fail?` (${fail} falharam — reabra Admin e tente de novo)`:''}`);
+  showN(`✅ ${ok} lojas importadas${fail?` (${fail} falharam — repita o seed)`:''}`);
   renderAdmin();
   renderCidadesBtns();
 }
