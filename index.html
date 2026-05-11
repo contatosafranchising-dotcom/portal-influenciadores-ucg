@@ -1485,6 +1485,7 @@ function notificarAdminWpp(tipo, ag, observacao){
   else if(tipo==='cancelado'){ icon='❌'; titulo='AGENDAMENTO CANCELADO'; }
   else if(tipo==='novo'){ icon='🍣'; titulo='NOVO AGENDAMENTO'; }
   else if(tipo==='conteudo'){ icon='📸'; titulo='POST REGISTRADO'; }
+  else if(tipo==='influ-nova'){ icon='👤'; titulo='NOVA INFLUENCIADORA'; }
   const linhas = [
     `${icon} *${titulo}* — S.A. Casa do Sushi`,
     '',
@@ -1639,13 +1640,47 @@ async function removerInflu(nome){
   }
 }
 
+// Normaliza o input de região: aceita "SP", "sp", "São Paulo", "são paulo" e
+// devolve sempre o código padrão minúsculo. Se existe uma região conhecida
+// (cwb, pr, sc, sp, mt, go, rs) cujo código ou nome bate (case-insensitive),
+// reutiliza essa região em vez de criar duplicada.
+function normalizarRegiao(input){
+  if(!input) return {cod:'', label:''};
+  const raw = String(input).trim();
+  if(!raw) return {cod:'', label:''};
+  const baixo = raw.toLowerCase();
+  const regioes = getRegioesSalvas();
+  // Match por código direto
+  for(const [cod, label] of Object.entries(regioes)){
+    if(cod.toLowerCase() === baixo) return {cod, label: label||cod.toUpperCase()};
+  }
+  // Match por nome de exibição (ex: "São Paulo")
+  for(const [cod, label] of Object.entries(regioes)){
+    if(String(label||'').toLowerCase() === baixo) return {cod, label};
+  }
+  // Match parcial por prefixo do nome (ex: "São" → "São Paulo")
+  for(const [cod, label] of Object.entries(regioes)){
+    const l = String(label||'').toLowerCase();
+    if(l && (l.startsWith(baixo) || baixo.startsWith(l))) return {cod, label};
+  }
+  // Nada bate — cria novo código minúsculo sem acento/espaço
+  const novoCod = baixo
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[^a-z0-9]+/g,'')
+    .substring(0,12) || 'novaregiao';
+  return {cod: novoCod, label: raw, isNova: true};
+}
+
 async function addInflu(){
   const nome=document.getElementById('n-nome').value.trim();
-  const regiao=document.getElementById('n-reg').value;
+  const regiaoRaw=document.getElementById('n-reg').value;
   if(!nome){showN('⚠️ Nome obrigatório!');return;}
   if(influ.find(i=>i.nome===nome)){showN('⚠️ Já existe uma influenciadora com esse nome!');return;}
+  const norm = normalizarRegiao(regiaoRaw);
+  const regiao = norm.cod;
+  if(!regiao){showN('⚠️ Informe a região (ex: cwb, sp, sc)');return;}
   const nova = {
-    nome, regiao,
+    nome, regiao, estado: regiao,
     insta:document.getElementById('n-insta').value.trim(),
     tiktok:document.getElementById('n-tiktok').value.trim(),
     wpp:document.getElementById('n-wpp').value.trim(),
@@ -1660,20 +1695,24 @@ async function addInflu(){
   };
   influ.push(nova);
   saveAll();
-  // Garante que a região aparece no filtro mesmo se ainda não tiver loja cadastrada
+  // Garante que a região existe no localStorage (e tenta gravar na planilha)
   const regioesSalvas = JSON.parse(localStorage.getItem('sushi_regioes')||'{}');
-  if(regiao && !regioesSalvas[regiao]){
-    regioesSalvas[regiao] = regiao.toUpperCase();
+  if(!regioesSalvas[regiao]){
+    regioesSalvas[regiao] = norm.label || regiao.toUpperCase();
     localStorage.setItem('sushi_regioes', JSON.stringify(regioesSalvas));
     writeToSheetAPI('Regiões', [regiao, regioesSalvas[regiao]]);
   }
-  ['n-nome','n-insta','n-tiktok','n-wpp','n-cupom','n-qi','n-qt','n-cpf','n-email','n-pix'].forEach(id=>document.getElementById(id).value='');
-  showN('💾 Salvando na planilha...');
+  ['n-nome','n-insta','n-tiktok','n-wpp','n-cupom','n-qi','n-qt','n-cpf','n-email','n-pix','n-reg'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const msgRegiao = norm.isNova ? ` (nova região "${regiao}" criada)` : ` em ${regioesSalvas[regiao]}`;
+  showN(`✅ ${nome} cadastrada${msgRegiao}!`);
   renderAdmin();
   renderInflu();
   renderFiltrosEstados();
   renderCidadesBtns();
+  renderRegioesList();
   atualizarDatalistsRegioes();
+  // Notifica admin via WhatsApp
+  notificarAdminWpp('influ-nova', {nomeInflu:nome, lojaId:'', data:hoje(), endereco:`Região: ${regioesSalvas[regiao]} · Instagram: ${nova.insta||'—'} · Cupom: ${nova.cupom||'—'}`}, 'Nova influenciadora cadastrada no portal');
   // Grava na planilha
   try {
     await writeToSheetAPI('Influenciadoras', [
