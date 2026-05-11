@@ -251,6 +251,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
         <select id="ag-influencer" onchange="updAg()">
           <option value="">Selecione seu nome...</option>
         </select>
+        <div id="ag-influ-aviso" style="display:none;font-size:11px;color:#ffa500;margin-top:6px"></div>
       </div>
       <div class="fi">
         <label>Data do pedido</label>
@@ -1322,6 +1323,8 @@ function selecionarLoja(id){
   document.getElementById('ag-form-title').textContent=`📋 Agendamento — ${l.n}`;
   document.getElementById('ag-form').style.display='block';
   document.getElementById('ag-form').scrollIntoView({behavior:'smooth',block:'start'});
+  // Filtra influenciadoras pela região da loja selecionada
+  populateInfluSelect('ag-influencer', l ? l.r : null);
   updAg();
 }
 
@@ -1331,12 +1334,31 @@ function cancelarAg(){
   document.getElementById('ag-form').style.display='none';
 }
 
-function populateInfluSelect(selId){
+function populateInfluSelect(selId, filtroRegiao){
   const s=document.getElementById(selId);
+  if(!s) return;
   const val=s.value;
-  s.innerHTML='<option value="">Selecione seu nome...</option>';
-  influ.forEach(i=>s.innerHTML+=`<option value="${i.nome}">${i.nome}</option>`);
-  if(val)s.value=val;
+  let lista = influ;
+  if(filtroRegiao){
+    const r = String(filtroRegiao).toLowerCase();
+    lista = influ.filter(i => String(i.regiao||'').toLowerCase()===r || String(i.estado||'').toLowerCase()===r);
+  }
+  const placeholder = filtroRegiao
+    ? `Selecione seu nome... (${lista.length} ${lista.length===1?'cadastrada':'cadastradas'} nesta região)`
+    : 'Selecione seu nome...';
+  s.innerHTML = `<option value="">${placeholder}</option>`;
+  lista.forEach(i=>s.innerHTML+=`<option value="${i.nome}">${i.nome}</option>`);
+  if(val && lista.some(i=>i.nome===val)) s.value=val;
+  // Aviso quando nenhuma menina dessa região
+  const aviso = document.getElementById('ag-influ-aviso');
+  if(aviso){
+    if(filtroRegiao && !lista.length){
+      aviso.style.display='block';
+      aviso.textContent = '⚠️ Nenhuma influenciadora cadastrada nesta região ainda.';
+    } else {
+      aviso.style.display='none';
+    }
+  }
 }
 
 function updAg(){
