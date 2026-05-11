@@ -366,6 +366,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
   <!-- ADMIN SUB TABS -->
   <div style="display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap" id="admin-subtabs">
     <button class="btn btn-red btn-sm" onclick="showAdminTab('cadastros',this)">➕ Cadastros</button>
+    <button class="btn btn-ghost btn-sm" onclick="showAdminTab('historico',this)">📊 Histórico</button>
     <button class="btn btn-ghost btn-sm" onclick="showAdminTab('vendas-imp',this)">💰 Importar Vendas</button>
     <button class="btn btn-ghost btn-sm" onclick="showAdminTab('gestao',this)">🗂 Gestão</button>
   </div>
@@ -478,6 +479,52 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
           <tbody id="admin-influ-tbody"></tbody>
         </table>
       </div>
+    </div>
+  </div>
+
+  <!-- SUB: HISTÓRICO (dashboard de agendamentos) -->
+  <div id="admin-tab-historico" style="display:none">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:22px" id="hist-stats"></div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r6);padding:16px;margin-bottom:16px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px">
+        <div class="fi"><label>Status</label>
+          <select id="hist-status" onchange="renderHistorico()">
+            <option value="">Todos</option>
+            <option value="pendente">⏳ Pendentes</option>
+            <option value="confirmado">✅ Confirmados</option>
+            <option value="cancelado">❌ Cancelados</option>
+          </select>
+        </div>
+        <div class="fi"><label>Influenciadora</label>
+          <select id="hist-influ" onchange="renderHistorico()"><option value="">Todas</option></select>
+        </div>
+        <div class="fi"><label>Loja / Região</label>
+          <select id="hist-loja" onchange="renderHistorico()"><option value="">Todas</option></select>
+        </div>
+        <div class="fi"><label>De</label>
+          <input type="date" id="hist-de" onchange="renderHistorico()">
+        </div>
+        <div class="fi"><label>Até</label>
+          <input type="date" id="hist-ate" onchange="renderHistorico()">
+        </div>
+        <div class="fi" style="justify-content:flex-end">
+          <label>&nbsp;</label>
+          <button class="btn btn-ghost btn-sm" onclick="exportarHistoricoCSV()">📥 Exportar CSV</button>
+        </div>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:800px">
+        <thead><tr id="hist-thead">
+          <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Status</th>
+          <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Data</th>
+          <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Influenciadora</th>
+          <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Loja</th>
+          <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Região</th>
+          <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Bloqueio até</th>
+        </tr></thead>
+        <tbody id="hist-tbody"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">Carregando...</td></tr></tbody>
+      </table>
     </div>
   </div>
 
@@ -655,11 +702,107 @@ const INFLU_DEFAULT = [
   {nome:'Eduarda Soares Betim',regiao:'cwb',insta:'@betinduda',tiktok:'@betindudaa',wpp:'(41) 99801-0352',cupom:'',qtInsta:'',qtTiktok:'',cpf:'124.711.709-00',email:'eduardasobtm@gmail.com',pix:'124.711.709-00',collab:''},
 ];
 
-// ========== GOOGLE SHEETS CONFIG ==========
+// ========== BACKEND CONFIG ==========
+// Supabase (banco principal — substitui Apps Script)
+const SUPABASE_URL = 'https://pcnmdmywvlkaxciwvsqn.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBjbm1kbXl3dmxrYXhjaXd2c3FuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNTI2NDcsImV4cCI6MjA5MjYyODY0N30.xjjA9o4JkNV7lKyMzFimLq5Pl0WqMtUSYGhhXGxk6s0';
+// Google Sheets (fallback legado)
 const SHEET_ID = '19v9RqaPhQk4CclD83yYqdCKvJeWDdsyDcKVvsGZKQLM';
 const SHEET_BASE = 'https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:json&sheet=';
 const API_URL = 'https://script.google.com/macros/s/AKfycbxeyyU7SebgMSSLsgZu3xyFmJYlhCcBO5FS4Q2ZNPllYH0zDFy_cjbE7F9WrDP2AnsT6Q/exec';
 let syncStatus = 'local'; // 'local' | 'synced' | 'syncing' | 'error'
+
+// ========== SUPABASE HELPERS ==========
+async function sbFetch(path, opts){
+  try {
+    const r = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+      ...opts,
+      headers: {
+        'apikey': SUPABASE_ANON,
+        'Authorization': 'Bearer ' + SUPABASE_ANON,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        ...(opts && opts.headers || {})
+      }
+    });
+    if (!r.ok) {
+      const t = await r.text().catch(()=>'');
+      console.warn('[supabase]', opts?.method||'GET', path, r.status, t.substring(0,200));
+      return null;
+    }
+    if (r.status === 204) return [];
+    return await r.json().catch(()=>null);
+  } catch(e){
+    console.warn('[supabase] erro:', e.message);
+    return null;
+  }
+}
+
+// Maps de tabela: como uma "row" do antigo writeToSheetAPI vira um objeto Supabase
+const TABLE_MAP = {
+  'Lojas': {
+    table: 'lojas',
+    pk: 'id',
+    fromRow: r => ({id: String(r[0]||'').trim(), nome: r[1]||'', regiao: String(r[2]||'').toLowerCase(), instagram: r[3]||'', endereco: r[4]||'', whatsapp: r[5]||'', link_pedido: r[6]||'', status: r[7]||'ativa'}),
+    toLegacy: row => ({'ID':row.id,'Nome da Loja':row.nome,'Estado':String(row.regiao||'').toUpperCase(),'Instagram':row.instagram||'','Endereço':row.endereco||'','WhatsApp':row.whatsapp||'','Link de Pedido':row.link_pedido||'','Status':row.status||'ativa'}),
+  },
+  'Influenciadoras': {
+    table: 'influenciadoras',
+    pk: 'nome',
+    fromRow: r => ({nome: r[0]||'', regiao: String(r[1]||'').toLowerCase(), instagram: r[2]||'', tiktok: r[3]||'', whatsapp: r[4]||'', cupom: r[5]||'', seguidores_insta: r[6]||'', seguidores_tiktok: r[7]||'', cpf: r[8]||'', email: r[9]||'', pix: r[10]||'', collab: r[11]||'', status: (r[12]||'pendente').toLowerCase(), primeiro_pedido: r[13]||'', observacoes: r[14]||''}),
+    toLegacy: row => ({'Nome Completo':row.nome,'Região':String(row.regiao||'').toUpperCase(),'Estado':String(row.regiao||'').toUpperCase(),'Instagram':row.instagram||'','TikTok':row.tiktok||'','WhatsApp':row.whatsapp||'','Cupom':row.cupom||'','Seg. Instagram':row.seguidores_insta||'','Seg. TikTok':row.seguidores_tiktok||'','CPF':row.cpf||'','E-mail':row.email||'','PIX':row.pix||'','Collab':row.collab||'','Status':row.status||'pendente','Primeiro Pedido':row.primeiro_pedido||'','Observações':row.observacoes||''}),
+  },
+  'Regiões': {
+    table: 'regioes',
+    pk: 'codigo',
+    fromRow: r => ({codigo: String(r[0]||'').toLowerCase(), nome: r[1]||r[0]||''}),
+    toLegacy: row => ({'Código':row.codigo,'Nome':row.nome}),
+  },
+  'Agendamentos': {
+    table: 'agendamentos',
+    pk: 'id',
+    fromRow: r => ({id: r[0], nome_influenciadora: r[1]||'', loja_id: r[2]||'', data_pedido: r[3]||null, horario: r[4]||'', endereco_entrega: r[5]||'', status: (r[6]||'pendente').toLowerCase(), data_bloqueio_fim: r[7]||null, observacoes: r[9]||''}),
+    toLegacy: row => ({'ID':row.id,'Nome Influenciadora':row.nome_influenciadora,'Loja':row.loja_id,'Data Pedido':row.data_pedido||'','Horário':row.horario||'','Endereço Entrega':row.endereco_entrega||'','Status':row.status||'pendente','Data Bloqueio Fim':row.data_bloqueio_fim||'','Data Agendamento':row.created_at||'','Observações':row.observacoes||''}),
+  },
+  'Conteudos': {
+    table: 'conteudos',
+    pk: null,
+    fromRow: r => ({nome_influenciadora: r[0]||'', regiao: String(r[1]||'').toLowerCase(), plataforma: r[2]||'Instagram', link_post: r[3]||'', collab: r[4]||'', data_post: r[5]||null, observacoes: r[6]||''}),
+    toLegacy: row => ({'Nome Influenciadora':row.nome_influenciadora,'Região':String(row.regiao||'').toUpperCase(),'Plataforma':row.plataforma,'Link do Post':row.link_post,'Collab':row.collab||'','Data Post':row.data_post||'','Observações':row.observacoes||''}),
+  },
+  'Vendas': {
+    table: 'vendas',
+    pk: null,
+    fromRow: r => ({nome_influenciadora: r[0]||'', regiao: String(r[1]||'').toLowerCase(), semana: r[2]||'', campanha: r[3]||'', num_pedidos: parseInt(r[4])||0, valor: parseFloat(String(r[5]||'0').replace(',','.'))||0, data_registro: r[6]||null}),
+    toLegacy: row => ({'Nome Influenciadora':row.nome_influenciadora,'Região':String(row.regiao||'').toUpperCase(),'Estado':String(row.regiao||'').toUpperCase(),'Semana':row.semana,'Campanha':row.campanha||'','Nº Pedidos':row.num_pedidos,'Valor Total (R$)':row.valor,'Data Registro':row.data_registro||''}),
+  },
+};
+
+async function supabaseRead(sheetName){
+  const m = TABLE_MAP[sheetName];
+  if(!m) return null;
+  const rows = await sbFetch(m.table + '?select=*&limit=10000', {method:'GET'});
+  if(!Array.isArray(rows)) return null;
+  return rows.map(m.toLegacy);
+}
+
+async function supabaseWrite(sheetName, row){
+  const m = TABLE_MAP[sheetName];
+  if(!m) return false;
+  const obj = m.fromRow(row);
+  // Para tabelas com pk → upsert; sem pk → insert direto
+  const path = m.table + (m.pk ? '?on_conflict='+m.pk : '');
+  const headers = m.pk ? {'Prefer':'resolution=merge-duplicates,return=minimal'} : {'Prefer':'return=minimal'};
+  const r = await sbFetch(path, {method:'POST', headers, body: JSON.stringify(obj)});
+  return r !== null;
+}
+
+async function supabaseDelete(sheetName, key){
+  const m = TABLE_MAP[sheetName];
+  if(!m || !m.pk) return false;
+  const r = await sbFetch(m.table+'?'+m.pk+'=eq.'+encodeURIComponent(key), {method:'DELETE'});
+  return r !== null;
+}
 
 // Escreve uma linha na planilha via JSONP
 async function writeToSheet(sheetName, row) {
@@ -706,12 +849,15 @@ async function readFromGviz(sheetName) {
   } catch(e) { return null; }
 }
 
-// Lê dados: tenta gviz (público) primeiro; se falhar, cai pro Apps Script via JSONP
+// Lê dados: Supabase primário; gviz fallback; Apps Script JSONP último recurso
 async function readFromAPI(sheetName) {
-  // gviz funciona pra qualquer aba pública sem precisar de Apps Script
+  // 1) Supabase (banco principal — sempre tentar primeiro)
+  const sbData = await supabaseRead(sheetName);
+  if (sbData) return sbData; // pode ser [] (sem dados) e ainda assim válido
+  // 2) gviz (legado da planilha)
   const gvizData = await readFromGviz(sheetName);
   if (gvizData && gvizData.length > 0) return gvizData;
-  // Fallback JSONP (caso gviz falhe ou aba esteja restrita)
+  // 3) Apps Script JSONP (último recurso)
   return new Promise((resolve) => {
     const cbName = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
     const script = document.createElement('script');
@@ -739,8 +885,17 @@ async function readFromAPI(sheetName) {
 
 // Escreve via JSONP GET (único método que funciona cross-origin)
 async function writeToSheetAPI(sheetName, row, customBody) {
+  // 1) Supabase (primário)
+  if (customBody && customBody.action === 'delete') {
+    const ok = await supabaseDelete(sheetName, customBody.key);
+    if (ok) return true;
+  } else if (row && TABLE_MAP[sheetName]) {
+    const ok = await supabaseWrite(sheetName, row);
+    if (ok) return true;
+  }
+  // 2) Apps Script JSONP (fallback legado)
   return new Promise((resolve) => {
-    const cbName = 'wcb_' + Date.now();
+    const cbName = 'wcb_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
     const script = document.createElement('script');
     let done = false;
     const timer = setTimeout(() => {
@@ -961,10 +1116,10 @@ function setSyncStatus(s) {
   const el = document.getElementById('sync-indicator');
   if (!el) return;
   const map = {
-    syncing: {txt:'⟳ Sincronizando...', color:'var(--orange)'},
-    synced:  {txt:'✅ Sincronizado', color:'var(--green)'},
-    error:   {txt:'⚠️ Sem conexão (dados locais)', color:'var(--orange)'},
-    local:   {txt:'💾 Dados locais', color:'var(--muted)'},
+    syncing: {txt:'⟳ Sincronizando com Supabase...', color:'var(--orange)'},
+    synced:  {txt:'✅ Conectado ao banco', color:'var(--green)'},
+    error:   {txt:'⚠️ Sem conexão (cache local)', color:'var(--orange)'},
+    local:   {txt:'💾 Cache local', color:'var(--muted)'},
   };
   const m = map[s]||map.local;
   el.textContent = m.txt;
@@ -1634,7 +1789,7 @@ function getLoja(id){
 
 // ========== ADMIN SUBTABS ==========
 function showAdminTab(tab, btn){
-  ['cadastros','vendas-imp','gestao'].forEach(t=>{
+  ['cadastros','historico','vendas-imp','gestao'].forEach(t=>{
     const el=document.getElementById('admin-tab-'+t);
     if(el)el.style.display=t===tab?'block':'none';
   });
@@ -1642,6 +1797,129 @@ function showAdminTab(tab, btn){
     b.classList.remove('btn-red');b.classList.add('btn-ghost');
   });
   if(btn){btn.classList.add('btn-red');btn.classList.remove('btn-ghost');}
+  if(tab==='historico') popularHistorico();
+}
+
+// ========== DASHBOARD HISTÓRICO ==========
+let _todosAgendamentos = [];
+
+async function popularHistorico(){
+  // Lê TODOS os agendamentos do Supabase (não só os do localStorage do admin)
+  const rows = await sbFetch('agendamentos?select=*&order=created_at.desc&limit=10000', {method:'GET'});
+  _todosAgendamentos = Array.isArray(rows) ? rows : [];
+  // Popula filtros
+  const selInflu = document.getElementById('hist-influ');
+  const selLoja = document.getElementById('hist-loja');
+  const nomes = [...new Set(_todosAgendamentos.map(a=>a.nome_influenciadora).filter(Boolean))].sort();
+  const lojas = [...new Set(_todosAgendamentos.map(a=>a.loja_id).filter(Boolean))].sort();
+  if(selInflu){
+    const val = selInflu.value;
+    selInflu.innerHTML = '<option value="">Todas</option>'+nomes.map(n=>`<option value="${n}">${n}</option>`).join('');
+    if(nomes.includes(val)) selInflu.value = val;
+  }
+  if(selLoja){
+    const val = selLoja.value;
+    selLoja.innerHTML = '<option value="">Todas</option>'+lojas.map(l=>{
+      const lo = getLoja(l);
+      return `<option value="${l}">${lo?lo.n:l}</option>`;
+    }).join('');
+    if(lojas.includes(val)) selLoja.value = val;
+  }
+  renderHistorico();
+}
+
+function renderHistorico(){
+  const fStatus = (document.getElementById('hist-status').value||'').toLowerCase();
+  const fInflu = document.getElementById('hist-influ').value||'';
+  const fLoja = document.getElementById('hist-loja').value||'';
+  const fDe = document.getElementById('hist-de').value||'';
+  const fAte = document.getElementById('hist-ate').value||'';
+  let lista = _todosAgendamentos.filter(a=>{
+    if(fStatus && (a.status||'').toLowerCase()!==fStatus) return false;
+    if(fInflu && a.nome_influenciadora!==fInflu) return false;
+    if(fLoja && a.loja_id!==fLoja) return false;
+    if(fDe && a.data_pedido && a.data_pedido<fDe) return false;
+    if(fAte && a.data_pedido && a.data_pedido>fAte) return false;
+    return true;
+  });
+  // Stats cards
+  const total = lista.length;
+  const pend = lista.filter(a=>(a.status||'').toLowerCase()==='pendente').length;
+  const conf = lista.filter(a=>(a.status||'').toLowerCase()==='confirmado').length;
+  const canc = lista.filter(a=>(a.status||'').toLowerCase()==='cancelado').length;
+  const taxa = total ? Math.round(conf/total*100) : 0;
+  const stats = [
+    {label:'Total no filtro', val: total, color:'var(--gold)'},
+    {label:'⏳ Pendentes',     val: pend,  color:'var(--orange)'},
+    {label:'✅ Confirmados',   val: conf,  color:'var(--green)'},
+    {label:'❌ Cancelados',    val: canc,  color:'#ff6b6b'},
+    {label:'Taxa confirmação', val: taxa+'%', color:'var(--rl)'},
+  ];
+  const el = document.getElementById('hist-stats');
+  if(el) el.innerHTML = stats.map(s=>`
+    <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r4);padding:14px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">${s.label}</div>
+      <div style="font-size:22px;font-weight:700;color:${s.color}">${s.val}</div>
+    </div>`).join('');
+  // Tabela
+  const tbody = document.getElementById('hist-tbody');
+  if(!tbody) return;
+  if(!lista.length){
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">Nenhum agendamento neste filtro.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = lista.map(a=>{
+    const loja = getLoja(a.loja_id);
+    const inf = getInflu(a.nome_influenciadora);
+    const regiao = loja ? loja.r : (inf ? inf.regiao : '');
+    const st = (a.status||'').toLowerCase();
+    const stBadge = st==='confirmado' ? '<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:2px;background:rgba(46,204,113,.15);color:var(--green)">✅ CONF</span>'
+                  : st==='cancelado' ? '<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:2px;background:rgba(255,100,100,.15);color:#ff6b6b">❌ CANC</span>'
+                  : '<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:2px;background:rgba(243,156,18,.15);color:var(--orange)">⏳ PEND</span>';
+    return `<tr>
+      <td style="padding:9px 12px;border-bottom:1px solid var(--bdr)">${stBadge}</td>
+      <td style="padding:9px 12px;border-bottom:1px solid var(--bdr);color:var(--muted2);font-size:12px">${a.data_pedido?formatData(a.data_pedido):'—'}${a.horario?' '+a.horario:''}</td>
+      <td style="padding:9px 12px;border-bottom:1px solid var(--bdr);font-weight:600">${a.nome_influenciadora||'—'}</td>
+      <td style="padding:9px 12px;border-bottom:1px solid var(--bdr)">${loja?loja.n:a.loja_id||'—'}</td>
+      <td style="padding:9px 12px;border-bottom:1px solid var(--bdr)"><span class="rb ${regiaoClass(regiao)}" style="font-size:9px">${regiaoLabel(regiao)}</span></td>
+      <td style="padding:9px 12px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--muted2)">${a.data_bloqueio_fim?formatData(a.data_bloqueio_fim):'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportarHistoricoCSV(){
+  const fStatus = (document.getElementById('hist-status').value||'').toLowerCase();
+  const fInflu = document.getElementById('hist-influ').value||'';
+  const fLoja = document.getElementById('hist-loja').value||'';
+  const fDe = document.getElementById('hist-de').value||'';
+  const fAte = document.getElementById('hist-ate').value||'';
+  const lista = _todosAgendamentos.filter(a=>{
+    if(fStatus && (a.status||'').toLowerCase()!==fStatus) return false;
+    if(fInflu && a.nome_influenciadora!==fInflu) return false;
+    if(fLoja && a.loja_id!==fLoja) return false;
+    if(fDe && a.data_pedido && a.data_pedido<fDe) return false;
+    if(fAte && a.data_pedido && a.data_pedido>fAte) return false;
+    return true;
+  });
+  if(!lista.length){showN('⚠️ Nada para exportar com esses filtros');return;}
+  const linhas = [['Status','Data Pedido','Horário','Influenciadora','Loja','Endereço','Bloqueio Fim','Observações','Criado em']];
+  lista.forEach(a=>{
+    const loja = getLoja(a.loja_id);
+    linhas.push([
+      a.status||'', a.data_pedido||'', a.horario||'', a.nome_influenciadora||'',
+      loja?loja.n:(a.loja_id||''), a.endereco_entrega||'', a.data_bloqueio_fim||'',
+      a.observacoes||'', a.created_at||''
+    ]);
+  });
+  const csv = linhas.map(l=>l.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'agendamentos-'+new Date().toISOString().split('T')[0]+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showN(`✅ ${lista.length} agendamentos exportados`);
 }
 
 // ========== ADICIONAR INFLUENCIADORA ==========
