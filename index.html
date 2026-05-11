@@ -374,6 +374,19 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:0" id="admin-stats"></div>
     <hr style="border:none;border-top:1px solid var(--bdr);margin:22px 0">
 
+    <!-- CONFIGURAÇÕES DO ADMIN -->
+    <div style="background:var(--s1);border:1px solid rgba(232,184,109,.3);border-radius:var(--r6);padding:20px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:8px">⚙️ Configurações do Admin</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Toda confirmação de recebimento, agendamento e cancelamento será enviada por WhatsApp para esse número (centraliza o histórico no seu celular).</div>
+      <div class="form-grid">
+        <div class="fi form-full">
+          <label>WhatsApp para receber notificações (formato: 41999999999, sem traço/espaço)</label>
+          <input type="text" id="cfg-admin-wpp" placeholder="Ex: 41999999999" oninput="salvarConfigAdmin()">
+        </div>
+      </div>
+      <div id="cfg-admin-status" style="margin-top:8px;font-size:11px;color:var(--green)"></div>
+    </div>
+
     <!-- NOVA INFLUENCIADORA -->
     <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r6);padding:20px;margin-bottom:16px">
       <div style="font-size:13px;font-weight:700;color:var(--rl);margin-bottom:14px">👤 Adicionar Influenciadora</div>
@@ -652,6 +665,17 @@ async function writeToSheet(sheetName, row) {
   return writeToSheetAPI(sheetName, row);
 }
 
+// Colunas esperadas por aba — usadas para validar que o gviz retornou a aba certa
+// (gviz silenciosamente redireciona pra primeira aba se o nome não existir)
+const SHEET_SCHEMA = {
+  'Lojas':           ['ID','Nome da Loja','Estado'],
+  'Agendamentos':    ['ID','Nome Influenciadora','Loja'],
+  'Influenciadoras': ['Nome Completo'],
+  'Regiões':         ['Código'],
+  'Conteudos':       ['Nome Influenciadora','Plataforma'],
+  'Vendas':          ['Nome Influenciadora','Semana'],
+};
+
 // Lê via gviz (endpoint público do Sheets, mais confiável que Apps Script)
 async function readFromGviz(sheetName) {
   try {
@@ -665,6 +689,12 @@ async function readFromGviz(sheetName) {
     const d = JSON.parse(txt.substring(start+1, end+1));
     if (d.status !== 'ok' || !d.table) return null;
     const headers = d.table.cols.map(c => c.label || c.id);
+    // Valida que a aba retornada é a esperada (gviz redireciona pra primeira aba se não achar)
+    const esperadas = SHEET_SCHEMA[sheetName];
+    if (esperadas && !esperadas.every(col => headers.includes(col))) {
+      console.warn('[gviz] aba '+sheetName+' não existe (recebeu colunas: '+headers.join(',')+')');
+      return null;
+    }
     return d.table.rows.map(r => {
       const obj = {};
       r.c.forEach((cell, i) => {
@@ -1377,6 +1407,8 @@ function confirmarAgendamento(){
 
   // Grava na planilha
   writeToSheetAPI('Agendamentos', [id, nome, loja?loja.n:lojaSel, data, hora, end, 'Pendente', '', new Date().toISOString(), '']);
+  // Notifica admin via WhatsApp
+  notificarAdminWpp('novo', novoAg, 'Aguardando confirmação de recebimento da influenciadora');
 
   showN('✅ Agendamento confirmado!');
   cancelarAg();
@@ -1433,6 +1465,49 @@ function confirmarEEnviarWpp(id){
   renderAdmin();
 }
 
+// ========== WHATSAPP DO ADMIN (fallback enquanto Apps Script estiver fora) ==========
+function getAdminWpp(){
+  return (localStorage.getItem('sushi_admin_wpp')||'').replace(/\D/g,'');
+}
+function salvarConfigAdmin(){
+  const v = document.getElementById('cfg-admin-wpp').value.trim().replace(/\D/g,'');
+  localStorage.setItem('sushi_admin_wpp', v);
+  const el = document.getElementById('cfg-admin-status');
+  if(el) el.textContent = v ? `✅ Salvo: notificações vão para ${v}` : '⚠️ Sem número configurado — admin não recebe notificações';
+}
+function notificarAdminWpp(tipo, ag, observacao){
+  const wpp = getAdminWpp();
+  if(!wpp) return; // sem admin configurado, não notifica
+  const loja = ag && ag.lojaId ? getLoja(ag.lojaId) : null;
+  const inf = ag ? getInflu(ag.nomeInflu) : null;
+  let icon = '📋', titulo = 'AGENDAMENTO';
+  if(tipo==='confirmado'){ icon='✅'; titulo='RECEBIMENTO CONFIRMADO'; }
+  else if(tipo==='cancelado'){ icon='❌'; titulo='AGENDAMENTO CANCELADO'; }
+  else if(tipo==='novo'){ icon='🍣'; titulo='NOVO AGENDAMENTO'; }
+  else if(tipo==='conteudo'){ icon='📸'; titulo='POST REGISTRADO'; }
+  const linhas = [
+    `${icon} *${titulo}* — S.A. Casa do Sushi`,
+    '',
+    `👤 Influenciadora: *${ag.nomeInflu||'?'}*${inf?.insta?' ('+inf.insta+')':''}`,
+    `🏪 Loja: *${loja?loja.n:(ag.lojaId||'?')}*`,
+    `📅 Data do pedido: ${ag.data?formatData(ag.data):'?'}${ag.hora?' às '+ag.hora:''}`,
+    ag.endereco?`📍 Endereço: ${ag.endereco}`:'',
+    inf?.cupom?`🎟️ Cupom: ${inf.cupom}`:'',
+    ag.dataBloqueioFim?`🔒 Bloqueada até: ${formatData(ag.dataBloqueioFim)}`:'',
+    observacao?`📝 ${observacao}`:'',
+    '',
+    `🕐 Registrado em: ${new Date().toLocaleString('pt-BR')}`,
+  ].filter(Boolean);
+  const msg = linhas.join('\n');
+  const a = document.createElement('a');
+  a.href = 'https://wa.me/55' + wpp + '?text=' + encodeURIComponent(msg);
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>document.body.removeChild(a), 500);
+}
+
 function confirmarRecebimento(id){
   const ag=agendamentos.find(a=>a.id===id);
   if(!ag)return;
@@ -1441,8 +1516,10 @@ function confirmarRecebimento(id){
   ag.status='confirmado';
   ag.dataBloqueioFim=fim.toISOString().split('T')[0];
   saveAll();
-  // Atualiza status na planilha (nova linha de confirmação)
+  // Tenta gravar na planilha (silencioso se falhar)
   writeToSheetAPI('Agendamentos', [ag.id+'_CONF', ag.nomeInflu, ag.lojaId, ag.data, ag.hora, ag.endereco, 'Confirmado', ag.dataBloqueioFim, new Date().toISOString(), 'Confirmado pela loja']);
+  // SEMPRE notifica o admin via WhatsApp (centraliza o histórico mesmo com API quebrada)
+  notificarAdminWpp('confirmado', ag, 'Influenciadora bloqueada por 15 dias para próximo pedido');
   showN(`✅ Recebimento confirmado! ${ag.nomeInflu} bloqueada por 15 dias.`);
   renderPendentes();
   renderInflu();
@@ -1453,8 +1530,8 @@ function cancelarAgendamento(id){
   agendamentos=agendamentos.filter(a=>a.id!==id);
   saveAll();
   if(ag){
-    // Grava cancelamento na planilha
     writeToSheetAPI('Agendamentos',[ag.id+'_CANC',ag.nomeInflu,ag.lojaId,ag.data,ag.hora,ag.endereco,'Cancelado','',new Date().toISOString(),'Cancelado pelo usuário']);
+    notificarAdminWpp('cancelado', ag, 'Agendamento cancelado pela influenciadora');
   }
   renderPendentes();
   renderInflu();
@@ -1476,6 +1553,8 @@ function addConteudo(){
   saveAll();
   // Grava na planilha
   writeToSheetAPI('Conteudos', [nome, regiao.toUpperCase(), plat, link, collab, hoje(), '']);
+  // Notifica admin via WhatsApp do novo post
+  notificarAdminWpp('conteudo', {nomeInflu:nome, lojaId:'', data:hoje(), endereco:'Plataforma: '+plat+' · '+(collab||'collab não informada')+' · Link: '+link}, 'Novo conteúdo postado pela influenciadora');
   document.getElementById('cont-link').value='';
   document.getElementById('cont-nome').value='';
   document.getElementById('cont-collab').value='';
@@ -1937,6 +2016,13 @@ function renderResultados(){
 // ========== ADMIN ==========
 function renderAdmin(){
   showAdminTab('cadastros', document.querySelector('#admin-subtabs .btn'));
+  // Carrega WhatsApp do admin no campo
+  const cfgEl = document.getElementById('cfg-admin-wpp');
+  if(cfgEl){
+    cfgEl.value = localStorage.getItem('sushi_admin_wpp')||'';
+    const st = document.getElementById('cfg-admin-status');
+    if(st) st.textContent = cfgEl.value ? `✅ Notificações vão para ${cfgEl.value}` : '⚠️ Configure um WhatsApp para receber as notificações de pedidos/confirmações';
+  }
   renderRegioesList();
   // Stats
   const stats=[
