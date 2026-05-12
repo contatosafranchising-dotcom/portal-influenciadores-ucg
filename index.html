@@ -1429,17 +1429,10 @@ function atualizarDatalistsRegioes(){
 }
 
 function renderCidadesExtra(){
-  const regioes=getRegioesSalvas();
-  const extras=Object.entries(regioes).filter(([k])=>k!=='cwb'&&k!=='fln');
-  // Também pega de lojasExtra caso não tenha sido salvo em sushi_regioes
-  const deLojasExtra=[...new Set(lojasExtra.map(l=>l.r))].filter(r=>r!=='cwb'&&r!=='fln');
-  const todasExtras=[...new Set([...extras.map(([k])=>k),...deLojasExtra])];
+  // DESATIVADO: regiões agora são renderizadas integralmente em renderCidadesBtns()
+  // (este container ficou vazio para evitar duplicação de botões)
   const el=document.getElementById('cidades-extra');
-  if(!el)return;
-  el.innerHTML=todasExtras.map(r=>{
-    const label=regioes[r]||r.toUpperCase();
-    return `<button class="cidade-btn" onclick="selecionarCidade('${r}',this)">📍 ${label}</button>`;
-  }).join('');
+  if(el) el.innerHTML='';
 }
 
 function renderCidadesBtns(){
