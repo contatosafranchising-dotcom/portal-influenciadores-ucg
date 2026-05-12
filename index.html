@@ -1188,7 +1188,12 @@ function goPage(id, el){
   if(id==='agendar'){renderPendentes();renderLojas('cwb');populateInfluSelect('ag-influencer');renderCidadesExtra();}
   if(id==='conteudos'){populateInfluSelect('cont-nome');renderConteudos();atualizarLojasCollab();}
   if(id==='resultados'){renderResultados();}
-  if(id==='admin'){renderAdmin();}
+  if(id==='admin'){
+    // Reseta pra Cadastros somente quando entra na página Admin pela primeira vez
+    const jaEsteveAqui = sessionStorage.getItem('sushi_admin_visited');
+    renderAdmin({resetTab: !jaEsteveAqui});
+    sessionStorage.setItem('sushi_admin_visited','1');
+  }
 }
 
 // ========== PÁGINA: INFLUENCIADORAS ==========
@@ -2422,8 +2427,12 @@ function renderResultados(){
 // ========== ADMIN RENDER (ATUALIZADO) ==========
 
 // ========== ADMIN ==========
-function renderAdmin(){
-  showAdminTab('cadastros', document.querySelector('#admin-subtabs .btn'));
+function renderAdmin(opts){
+  // Por padrão NÃO reseta a aba — só reseta no primeiro carregamento ou se pedido explicitamente
+  const forcarCadastros = opts && opts.resetTab;
+  if(forcarCadastros){
+    showAdminTab('cadastros', document.querySelector('#admin-subtabs .btn'));
+  }
   // Carrega WhatsApp do admin no campo
   const cfgEl = document.getElementById('cfg-admin-wpp');
   if(cfgEl){
