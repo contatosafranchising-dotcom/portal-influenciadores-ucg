@@ -1189,10 +1189,8 @@ function goPage(id, el){
   if(id==='conteudos'){populateInfluSelect('cont-nome');renderConteudos();atualizarLojasCollab();}
   if(id==='resultados'){renderResultados();}
   if(id==='admin'){
-    // Reseta pra Cadastros somente quando entra na página Admin pela primeira vez
-    const jaEsteveAqui = sessionStorage.getItem('sushi_admin_visited');
-    renderAdmin({resetTab: !jaEsteveAqui});
-    sessionStorage.setItem('sushi_admin_visited','1');
+    // Toda vez que ENTRA no Admin via menu principal, vai pra Cadastros (default)
+    renderAdmin({resetTab: true});
   }
 }
 
