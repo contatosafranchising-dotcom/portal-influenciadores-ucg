@@ -1666,13 +1666,13 @@ function notificarAdminWpp(tipo, ag, observacao){
   if(!wpp) return; // sem admin configurado, não notifica
   const loja = ag && ag.lojaId ? getLoja(ag.lojaId) : null;
   const inf = ag ? getInflu(ag.nomeInflu) : null;
-  // Usa apenas emojis básicos universais (✅ ❌ ⭐ ⚠️) — outros podem não renderizar em alguns Androids
+  // Apenas texto — emojis frequentemente não renderizam corretamente em alguns Androids/WhatsApp web
   let titulo = '[AGENDAMENTO]';
-  if(tipo==='confirmado')     titulo = '✅ [RECEBIMENTO CONFIRMADO]';
-  else if(tipo==='cancelado') titulo = '❌ [AGENDAMENTO CANCELADO]';
-  else if(tipo==='novo')      titulo = '⭐ [NOVO AGENDAMENTO]';
-  else if(tipo==='conteudo')  titulo = '⭐ [POST REGISTRADO]';
-  else if(tipo==='influ-nova')titulo = '⭐ [NOVA INFLUENCIADORA]';
+  if(tipo==='confirmado')     titulo = '[RECEBIMENTO CONFIRMADO]';
+  else if(tipo==='cancelado') titulo = '[AGENDAMENTO CANCELADO]';
+  else if(tipo==='novo')      titulo = '[NOVO AGENDAMENTO]';
+  else if(tipo==='conteudo')  titulo = '[POST REGISTRADO]';
+  else if(tipo==='influ-nova')titulo = '[NOVA INFLUENCIADORA]';
   const linhas = [
     `*${titulo}* - S.A. Casa do Sushi`,
     '',
@@ -1696,32 +1696,23 @@ function notificarAdminWpp(tipo, ag, observacao){
   setTimeout(()=>document.body.removeChild(a), 500);
 }
 
-// Notificação dedicada quando influenciadora solicita collab em 2+ lojas:
-// envia mensagem clara pro admin com lista de lojas + contato da menina
+// Notificação curta pro admin quando a menina pede collab em 2+ lojas
 function notificarMultiCollabAdmin(nomeInflu, inf, plataforma, link, lojasIds, statusCollab){
   const wpp = getAdminWpp();
   if(!wpp) return;
-  const lojasDetalhe = lojasIds.map(id => {
+  const lista = lojasIds.map(id => {
     const lo = getLoja(id);
-    if(!lo) return '- '+id;
-    return `- *${lo.n}* (${String(lo.r||'').toUpperCase()})${lo.w?' — WhatsApp loja: '+lo.w:''}`;
+    return lo ? `- ${lo.n}${lo.w?' ('+lo.w+')':''}` : '- '+id;
   }).join('\n');
   const linhas = [
-    `*⭐ [MULTIPLAS COLLABS SOLICITADAS]* - S.A. Casa do Sushi`,
+    `*COLLAB EM ${lojasIds.length} LOJAS* — S.A. Casa do Sushi`,
     '',
-    `*Influenciadora:* ${nomeInflu}${inf?.insta?' ('+inf.insta+')':''}`,
-    inf?.wpp?`*WhatsApp dela:* ${inf.wpp}`:'',
-    `*Plataforma:* ${plataforma}`,
-    `*Link do post:* ${link}`,
-    statusCollab?`*Status atual:* ${statusCollab}`:'',
+    `*${nomeInflu}*${inf?.insta?' '+inf.insta:''}${inf?.wpp?' | '+inf.wpp:''}`,
+    `Plataforma: ${plataforma}`,
+    `Post: ${link}`,
     '',
-    `*Solicitou collab em ${lojasIds.length} lojas:*`,
-    lojasDetalhe,
-    '',
-    `_Acao sugerida: contatar cada loja individualmente para alinhar o aceite da collab._`,
-    '',
-    `_Registrado em: ${new Date().toLocaleString('pt-BR')}_`,
-  ].filter(Boolean);
+    lista,
+  ];
   const msg = linhas.join('\n');
   const a = document.createElement('a');
   a.href = 'https://wa.me/55' + wpp + '?text=' + encodeURIComponent(msg);
@@ -1816,30 +1807,36 @@ function addConteudo(){
   saveAll();
   // Grava no banco (lojas_collab vai como array)
   writeToSheetAPI('Conteudos', [nome, regiao.toUpperCase(), plat, link, collab, hoje(), '', lojasMarcadas]);
-  // Notifica admin via WhatsApp do novo post
-  const lojasNomes = lojasMarcadas.map(id=>{const lo=getLoja(id);return lo?lo.n:id;});
-  const obsAdmin = 'Plataforma: '+plat+' · '+(collab||'collab não informada')+(lojasNomes.length?' · Lojas em collab: '+lojasNomes.join(', '):'')+' · Link: '+link;
-  notificarAdminWpp('conteudo', {nomeInflu:nome, lojaId:'', data:hoje(), endereco:obsAdmin}, 'Novo conteúdo postado pela influenciadora');
-  // Se solicitou collab em apenas UMA loja, abre WhatsApp pra ela pedindo aceite
+
+  // Regra:
+  //  0 lojas → admin recebe registro do post (continua sabendo)
+  //  1 loja  → SÓ a loja recebe (admin NÃO recebe — evita ruído)
+  //  2+ lojas → SÓ o admin recebe lista curta (admin distribui depois)
   let mensagemExtra = '';
-  if(lojasMarcadas.length === 1){
+  if(lojasMarcadas.length === 0){
+    notificarAdminWpp('conteudo',
+      {nomeInflu:nome, lojaId:'', data:hoje(), endereco:`Plataforma: ${plat} · Link: ${link}`},
+      'Sem collab marcada nesta postagem');
+  } else if(lojasMarcadas.length === 1){
     const loja = getLoja(lojasMarcadas[0]);
     if(loja && loja.w){
       const wppLoja = loja.w.replace(/\D/g,'');
       if(wppLoja){
-        const msgCollab = `Olá! 🍣\n\nA influenciadora *${nome}*${inf?.insta?' ('+inf.insta+')':''} acabou de publicar um conteúdo no ${plat} marcando a *${loja.n}* — e está solicitando que vocês aceitem a *collab* no post.\n\n🔗 Link do post: ${link}\n\nPedimos por gentileza que abram a notificação do ${plat} e *aceitem a collab*, assim o post fica visível também no perfil da loja e amplifica o alcance.\n\nQualquer dúvida, falar com a equipe de marketing. Obrigada! 🙏\n\n*S.A. Casa do Sushi*`;
+        const msgCollab = `Olá! Sou da equipe de marketing da *S.A. Casa do Sushi*.\n\nA influenciadora *${nome}*${inf?.insta?' ('+inf.insta+')':''} publicou um conteúdo no ${plat} marcando a *${loja.n}* e está pedindo o *aceite da collab* no post.\n\nLink: ${link}\n\nPor gentileza, abrir a notificação do ${plat} e aceitar a collab — assim o post amplifica pra base de vocês também. Obrigada!`;
         const a = document.createElement('a');
         a.href = 'https://wa.me/55'+wppLoja+'?text='+encodeURIComponent(msgCollab);
         a.target = '_blank'; a.rel = 'noopener';
         document.body.appendChild(a); a.click();
         setTimeout(()=>document.body.removeChild(a), 500);
-        mensagemExtra = ` · Abrimos WhatsApp da ${loja.n} pedindo aceite`;
+        mensagemExtra = ` · WhatsApp aberto pra ${loja.n}`;
       }
+    } else {
+      mensagemExtra = ' · ⚠️ Loja sem WhatsApp cadastrado';
     }
-  } else if(lojasMarcadas.length > 1){
-    // Múltiplas lojas: notifica admin com mensagem DEDICADA listando todas
+  } else {
+    // Múltiplas: notifica SOMENTE admin com lista curta
     notificarMultiCollabAdmin(nome, inf, plat, link, lojasMarcadas, collab);
-    mensagemExtra = ` · Avisamos admin de ${lojasMarcadas.length} collabs`;
+    mensagemExtra = ` · Admin avisado (${lojasMarcadas.length} lojas)`;
   }
   document.getElementById('cont-link').value='';
   document.getElementById('cont-nome').value='';
