@@ -1187,7 +1187,7 @@ function goPage(id, el){
   if(el)el.classList.add('active');
   if(id==='influenciadoras')renderInflu();
   if(id==='agendar'){renderPendentes();renderLojas('cwb');populateInfluSelect('ag-influencer');renderCidadesExtra();}
-  if(id==='conteudos'){populateInfluSelect('cont-nome');renderConteudos();atualizarLojasCollab();}
+  if(id==='conteudos'){populateInfluSelect('cont-nome');renderConteudos();atualizarLojasCollab();renderFiltrosEstados();}
   if(id==='resultados'){renderResultados();}
   if(id==='admin'){
     // Toda vez que ENTRA no Admin via menu principal, vai pra Cadastros (default)
@@ -1215,13 +1215,19 @@ function renderFiltrosEstados(){
       `<button class="btn btn-ghost btn-sm" onclick="filtrarInflu('${r}',this)">📍 ${regioes[r]||r.toUpperCase()}</button>`
     ).join('');
   }
-  // Filtros de conteúdos
+  // Filtros de conteúdos — mostra TODAS as regiões com pelo menos 1 post
   const el2 = document.getElementById('filtros-estados-cont');
   if(el2){
     const regioes = getRegioesSalvas();
-    const regioesCom = Object.keys(regioes).filter(r => conteudos.some(c => c.regiao===r));
+    // Conta posts por região
+    const porRegiao = {};
+    conteudos.forEach(c => {
+      const r = String(c.regiao||'').toLowerCase();
+      if(r) porRegiao[r] = (porRegiao[r]||0)+1;
+    });
+    const regioesCom = Object.keys(porRegiao).sort();
     el2.innerHTML = regioesCom.map(r =>
-      `<button class="btn btn-ghost btn-sm" onclick="filtrarConteudos('${r}',this)">📍 ${regioes[r]||r.toUpperCase()}</button>`
+      `<button class="btn btn-ghost btn-sm" onclick="filtrarConteudos('${r}',this)">📍 ${regioes[r]||r.toUpperCase()} <span style="color:var(--muted);font-size:10px;margin-left:4px">${porRegiao[r]}</span></button>`
     ).join('');
   }
 }
@@ -1859,7 +1865,8 @@ function filtrarConteudos(r,btn){
 
 function renderConteudos(){
   const grid=document.getElementById('cont-grid');
-  let lista=filtroContAtual==='todos'?conteudos:conteudos.filter(c=>c.regiao===filtroContAtual);
+  const filtro = String(filtroContAtual||'todos').toLowerCase();
+  let lista = filtro==='todos' ? conteudos : conteudos.filter(c => String(c.regiao||'').toLowerCase() === filtro);
   if(!lista.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ic">📭</div><p>Nenhum conteúdo registrado ainda</p></div>';return;}
   grid.innerHTML=[...lista].reverse().map(c=>`
     <div class="cont-card">
