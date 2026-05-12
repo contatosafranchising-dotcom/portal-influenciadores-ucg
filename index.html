@@ -2897,18 +2897,29 @@ async function renderResultados(){
     const pct=Math.round((r.valor/maxVal)*100);
     const medal=medals[i]||`#${i+1}`;
     const qtdLojas = Object.keys(r.lojas||{}).length;
+    const comissao = r.valor * 0.07;
+    const inf = getInflu(r.nome);
+    const pix = inf?.pix || '';
+    const safeNome = String(r.nome).replace(/'/g,"\\'");
     return `<div style="background:var(--s1);border:1px solid ${i===0?'rgba(232,184,109,.35)':i===1?'rgba(255,255,255,.12)':i===2?'rgba(200,16,46,.2)':'var(--bdr)'};border-radius:var(--r6);padding:18px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div style="font-size:22px">${medal}</div>
         <span class="rb ${regiaoClass(r.regiao)}">${regiaoLabel(r.regiao)}</span>
       </div>
       <div style="font-size:14px;font-weight:700;margin-bottom:4px">${r.nome}</div>
-      <div style="font-size:20px;font-weight:700;color:var(--gold);margin-bottom:4px">R$ ${r.valor.toFixed(2)}</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">${r.pedidos} venda${r.pedidos!==1?'s':''} · ticket médio R$ ${r.pedidos?(r.valor/r.pedidos).toFixed(2):'—'}</div>
+      <div style="font-size:20px;font-weight:700;color:var(--gold);margin-bottom:2px">R$ ${r.valor.toFixed(2)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${r.pedidos} venda${r.pedidos!==1?'s':''} · TM R$ ${r.pedidos?(r.valor/r.pedidos).toFixed(2):'—'}</div>
+      <div style="background:var(--s2);border:1px solid rgba(200,16,46,.25);border-radius:var(--r3);padding:8px 10px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div style="min-width:0">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--rl)">Comissão 7%</div>
+          <div style="font-size:16px;font-weight:700;color:var(--rl)">R$ ${comissao.toFixed(2).replace('.',',')}</div>
+        </div>
+        ${pix?`<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:6px 10px;flex-shrink:0" onclick="copiarPixInflu('${safeNome}', event)" title="PIX: ${pix.replace(/"/g,'')}">📋 PIX</button>`:''}
+      </div>
       <div style="height:4px;background:var(--s3);border-radius:2px;overflow:hidden;margin-bottom:12px">
         <div style="height:100%;width:${pct}%;background:${i===0?'var(--gold)':i===1?'rgba(255,255,255,.4)':'var(--red)'};border-radius:2px;transition:width .6s ease"></div>
       </div>
-      ${qtdLojas?`<button class="btn btn-ghost btn-sm" style="width:100%;font-size:11px" onclick="verLojasInflu('${String(r.nome).replace(/'/g,"\\'")}')">🏪 Ver ${qtdLojas} loja${qtdLojas!==1?'s':''}</button>`:''}
+      ${qtdLojas?`<button class="btn btn-ghost btn-sm" style="width:100%;font-size:11px" onclick="verLojasInflu('${safeNome}')">🏪 Ver ${qtdLojas} loja${qtdLojas!==1?'s':''}</button>`:''}
     </div>`;
   }).join('');
 
@@ -2955,6 +2966,27 @@ async function renderResultados(){
     <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-weight:700;color:var(--gold)">R$ ${v.valor.toFixed(2)}</td>
     <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);color:var(--muted)">${v.ticket!==null?'R$ '+v.ticket.toFixed(2):'—'}</td>
   </tr>`).join('');
+}
+
+function copiarPixInflu(nome, ev){
+  if(ev){ev.stopPropagation();}
+  const inf = getInflu(nome);
+  const pix = inf?.pix || '';
+  if(!pix){showN('⚠️ Influenciadora sem PIX cadastrado');return;}
+  const agg = window._resAgg && window._resAgg[nome];
+  const comissao = agg ? (agg.valor*0.07) : 0;
+  const txt = pix;
+  const fallback = () => {
+    const ta = document.createElement('textarea'); ta.value = txt;
+    ta.style.position='fixed'; ta.style.left='-9999px';
+    document.body.appendChild(ta); ta.select();
+    try{document.execCommand('copy');}catch(e){}
+    document.body.removeChild(ta);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).catch(fallback);
+  } else { fallback(); }
+  showN(`✅ PIX copiado · ${nome} · R$ ${comissao.toFixed(2).replace('.',',')}`);
 }
 
 function verLojasInflu(nome){
