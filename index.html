@@ -1288,6 +1288,21 @@ function getProximoPedido(nomeInflu){
 
 function avatarLetra(nome){return nome.trim().charAt(0).toUpperCase();}
 function formatData(d){if(!d)return '—';return new Date(d+'T12:00:00').toLocaleDateString('pt-BR');}
+function formatSemanaBR(s){
+  if(!s) return '—';
+  const m = /^(\d{4})-W(\d{1,2})$/.exec(String(s));
+  if(!m) return s;
+  const ano = parseInt(m[1]), wk = parseInt(m[2]);
+  // ISO: semana 1 contém 4 de janeiro
+  const jan4 = new Date(Date.UTC(ano,0,4));
+  const dayJan4 = jan4.getUTCDay() || 7;
+  const mondayWk1 = new Date(jan4); mondayWk1.setUTCDate(jan4.getUTCDate() - dayJan4 + 1);
+  const monday = new Date(mondayWk1); monday.setUTCDate(mondayWk1.getUTCDate() + (wk-1)*7);
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const mes = meses[monday.getUTCMonth()];
+  const wOfMonth = Math.min(4, Math.max(1, Math.ceil(monday.getUTCDate()/7)));
+  return `${mes} · Semana ${wOfMonth}`;
+}
 
 // ========== NAVEGAÇÃO ==========
 function goPage(id, el){
@@ -2108,7 +2123,7 @@ async function popularCupons(){
     el.innerHTML = '<option value="">Todas</option>' + items.map(mapFn).join('');
     if(items.some(i=>(typeof i==='string'?i:i[0])===val)) el.value = val;
   };
-  setSel('cup-semana', semanas, s=>`<option value="${s}">${s}</option>`);
+  setSel('cup-semana', semanas, s=>`<option value="${s}">${formatSemanaBR(s)}</option>`);
   setSel('cup-regiao', Object.keys(regioes), r=>`<option value="${r}">${regioes[r]||r.toUpperCase()}</option>`);
   setSel('cup-influ', influs, n=>`<option value="${n}">${n}</option>`);
   setSel('cup-loja', lojas, id=>{const lo=getLoja(id);return `<option value="${id}">${lo?lo.n:id}</option>`;});
@@ -2902,7 +2917,7 @@ async function renderResultados(){
   vendas.forEach(v=>v.semana && semanasAll.add(v.semana));
   cupons.forEach(c=>c.semana && semanasAll.add(c.semana));
   const semanasOrd = [...semanasAll].sort();
-  if(lblSemana && semanasOrd.length) lblSemana.textContent=`Última atualização: semana ${semanasOrd[semanasOrd.length-1]}`;
+  if(lblSemana && semanasOrd.length) lblSemana.textContent=`Última atualização: ${formatSemanaBR(semanasOrd[semanasOrd.length-1])}`;
 
   // Linhas detalhadas: vendas manuais + cupons individuais
   const linhas = [];
@@ -2935,7 +2950,7 @@ async function renderResultados(){
   tbody.innerHTML=linhas.map(v=>`<tr>
     <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-weight:600">${v.nome}</td>
     <td style="padding:10px 12px;border-bottom:1px solid var(--bdr)"><span class="rb ${regiaoClass(v.regiao)}">${regiaoLabel(v.regiao)}</span></td>
-    <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--muted)">${v.semana||'—'}</td>
+    <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--muted)">${formatSemanaBR(v.semana)}</td>
     <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-weight:700">${v.pedidos}</td>
     <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-weight:700;color:var(--gold)">R$ ${v.valor.toFixed(2)}</td>
     <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);color:var(--muted)">${v.ticket!==null?'R$ '+v.ticket.toFixed(2):'—'}</td>
