@@ -2809,23 +2809,46 @@ async function salvarEdicaoLoja(){
 }
 
 // ========== RESULTADOS ==========
-function renderResultados(){
+async function renderResultados(){
   const tbody=document.getElementById('res-tbody');
   const ranking=document.getElementById('res-ranking');
-  if(!vendas.length){
-    ranking.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ic">📊</div><p>Nenhum resultado registrado ainda.<br>Aguarde o lançamento semanal da equipe!</p></div>';
+  const lblSemana=document.getElementById('res-semana-label');
+
+  // Puxa cupons do Supabase (vendas reais via cupom) — sempre fresco
+  let cupons = [];
+  try {
+    const r = await sbFetch('vendas_cupom?select=*&order=data_venda.desc&limit=10000', {method:'GET'});
+    cupons = Array.isArray(r) ? r : [];
+  } catch(e) { cupons = []; }
+  _todosCupons = cupons; // mantém o cache do dashboard de Admin coerente
+
+  // Aggregate por influenciadora — combina vendas manuais (semanais) + cupons (PDV)
+  const agg = {};
+  vendas.forEach(v=>{
+    const n = v.nome; if(!n) return;
+    if(!agg[n]) agg[n] = {nome:n, regiao:v.regiao||(getInflu(n)?.regiao||''), pedidos:0, valor:0, semanas:new Set()};
+    agg[n].pedidos += parseInt(v.pedidos)||0;
+    agg[n].valor   += parseFloat(v.valor)||0;
+    if(v.semana) agg[n].semanas.add(v.semana);
+  });
+  cupons.forEach(c=>{
+    const n = c.influenciadora; if(!n) return; // só conta cupom vinculado a influ cadastrada
+    const inf = getInflu(n);
+    if(!agg[n]) agg[n] = {nome:n, regiao:inf?.regiao||'', pedidos:0, valor:0, semanas:new Set()};
+    agg[n].pedidos += 1;
+    agg[n].valor   += parseFloat(c.total_liquido)||0;
+    if(c.semana) agg[n].semanas.add(c.semana);
+  });
+
+  const sorted = Object.values(agg).sort((a,b)=>b.valor-a.valor);
+
+  if(!sorted.length){
+    ranking.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ic">📊</div><p>Nenhuma venda registrada ainda.<br>Quando os cupons forem usados nas lojas, o ranking aparece aqui.</p></div>';
     tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">Sem dados ainda.</td></tr>';
+    if(lblSemana) lblSemana.textContent='';
     return;
   }
 
-  // Aggregate by influenciadora
-  const agg={};
-  vendas.forEach(v=>{
-    if(!agg[v.nome])agg[v.nome]={nome:v.nome,regiao:v.regiao,pedidos:0,valor:0};
-    agg[v.nome].pedidos+=parseInt(v.pedidos)||0;
-    agg[v.nome].valor+=parseFloat(v.valor)||0;
-  });
-  const sorted=Object.values(agg).sort((a,b)=>b.valor-a.valor);
   const medals=['🥇','🥈','🥉'];
   const maxVal=sorted[0]?.valor||1;
 
@@ -2839,25 +2862,55 @@ function renderResultados(){
       </div>
       <div style="font-size:14px;font-weight:700;margin-bottom:4px">${r.nome}</div>
       <div style="font-size:20px;font-weight:700;color:var(--gold);margin-bottom:4px">R$ ${r.valor.toFixed(2)}</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">${r.pedidos} pedido${r.pedidos!==1?'s':''} · ticket médio R$ ${r.pedidos?(r.valor/r.pedidos).toFixed(2):'—'}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">${r.pedidos} venda${r.pedidos!==1?'s':''} · ticket médio R$ ${r.pedidos?(r.valor/r.pedidos).toFixed(2):'—'}</div>
       <div style="height:4px;background:var(--s3);border-radius:2px;overflow:hidden">
         <div style="height:100%;width:${pct}%;background:${i===0?'var(--gold)':i===1?'rgba(255,255,255,.4)':'var(--red)'};border-radius:2px;transition:width .6s ease"></div>
       </div>
     </div>`;
   }).join('');
 
-  // Last semana label
-  const semanas=[...new Set(vendas.map(v=>v.semana).filter(Boolean))].sort();
-  if(semanas.length)document.getElementById('res-semana-label').textContent=`Última atualização: semana ${semanas[semanas.length-1]}`;
+  // Última semana label (considera manuais + cupons)
+  const semanasAll = new Set();
+  vendas.forEach(v=>v.semana && semanasAll.add(v.semana));
+  cupons.forEach(c=>c.semana && semanasAll.add(c.semana));
+  const semanasOrd = [...semanasAll].sort();
+  if(lblSemana && semanasOrd.length) lblSemana.textContent=`Última atualização: semana ${semanasOrd[semanasOrd.length-1]}`;
 
-  // Table
-  tbody.innerHTML=[...vendas].reverse().map(v=>`<tr>
+  // Linhas detalhadas: vendas manuais + cupons individuais
+  const linhas = [];
+  vendas.forEach(v=>{
+    linhas.push({
+      data: v.data || '',
+      nome: v.nome,
+      regiao: v.regiao,
+      semana: v.semana||'—',
+      pedidos: parseInt(v.pedidos)||0,
+      valor: parseFloat(v.valor)||0,
+      ticket: v.pedidos && v.valor ? (parseFloat(v.valor)/parseInt(v.pedidos)) : null,
+    });
+  });
+  cupons.forEach(c=>{
+    if(!c.influenciadora) return;
+    const inf = getInflu(c.influenciadora);
+    linhas.push({
+      data: c.data_venda||'',
+      nome: c.influenciadora,
+      regiao: inf?.regiao||'',
+      semana: c.semana||'—',
+      pedidos: 1,
+      valor: parseFloat(c.total_liquido)||0,
+      ticket: parseFloat(c.total_liquido)||0,
+    });
+  });
+  linhas.sort((a,b)=> (b.data||'').localeCompare(a.data||''));
+
+  tbody.innerHTML=linhas.map(v=>`<tr>
     <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-weight:600">${v.nome}</td>
     <td style="padding:10px 12px;border-bottom:1px solid var(--bdr)"><span class="rb ${regiaoClass(v.regiao)}">${regiaoLabel(v.regiao)}</span></td>
     <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--muted)">${v.semana||'—'}</td>
-    <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-weight:700">${v.pedidos||0}</td>
-    <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-weight:700;color:var(--gold)">R$ ${parseFloat(v.valor||0).toFixed(2)}</td>
-    <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);color:var(--muted)">${v.pedidos&&v.valor?(parseFloat(v.valor)/parseInt(v.pedidos)).toFixed(2):'—'}</td>
+    <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-weight:700">${v.pedidos}</td>
+    <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-weight:700;color:var(--gold)">R$ ${v.valor.toFixed(2)}</td>
+    <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);color:var(--muted)">${v.ticket!==null?'R$ '+v.ticket.toFixed(2):'—'}</td>
   </tr>`).join('');
 }
 
