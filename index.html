@@ -376,6 +376,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
   <div style="display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap" id="admin-subtabs">
     <button class="btn btn-red btn-sm" onclick="showAdminTab('cadastros',this)">➕ Cadastros</button>
     <button class="btn btn-ghost btn-sm" onclick="showAdminTab('historico',this)">📊 Histórico</button>
+    <button class="btn btn-ghost btn-sm" onclick="showAdminTab('cupons',this)">🎟️ Cupons</button>
     <button class="btn btn-ghost btn-sm" onclick="showAdminTab('vendas-imp',this)">💰 Importar Vendas</button>
     <button class="btn btn-ghost btn-sm" onclick="showAdminTab('gestao',this)">🗂 Gestão</button>
   </div>
@@ -537,6 +538,61 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
     </div>
   </div>
 
+  <!-- SUB: CUPONS — Dashboard dinâmico de performance por cupom -->
+  <div id="admin-tab-cupons" style="display:none">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px" id="cup-stats"></div>
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r6);padding:16px;margin-bottom:16px">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">FILTROS</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">
+        <div class="fi"><label>De</label><input type="date" id="cup-de" onchange="renderCupons()"></div>
+        <div class="fi"><label>Até</label><input type="date" id="cup-ate" onchange="renderCupons()"></div>
+        <div class="fi"><label>Semana</label>
+          <select id="cup-semana" onchange="renderCupons()"><option value="">Todas</option></select>
+        </div>
+        <div class="fi"><label>Região</label>
+          <select id="cup-regiao" onchange="renderCupons()"><option value="">Todas</option></select>
+        </div>
+        <div class="fi"><label>Influenciadora</label>
+          <select id="cup-influ" onchange="renderCupons()"><option value="">Todas</option></select>
+        </div>
+        <div class="fi"><label>Loja</label>
+          <select id="cup-loja" onchange="renderCupons()"><option value="">Todas</option></select>
+        </div>
+        <div class="fi"><label>Cupom (busca)</label>
+          <input type="text" id="cup-busca" placeholder="ex: ELO10" oninput="renderCupons()">
+        </div>
+        <div class="fi" style="justify-content:flex-end">
+          <label>&nbsp;</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="abrirImportCupons()">📋 Importar PDF</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportarCuponsCSV()">📥 CSV</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Ranking de influenciadoras -->
+    <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r6);padding:18px;margin-bottom:18px">
+      <div style="font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:14px">🏆 Ranking de Performance</div>
+      <div id="cup-ranking"></div>
+    </div>
+    <!-- Tabela detalhada -->
+    <div style="font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Detalhamento</div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:900px">
+        <thead><tr>
+          <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Data</th>
+          <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Cliente</th>
+          <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Cupom</th>
+          <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Influenciadora</th>
+          <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Loja</th>
+          <th style="text-align:right;padding:10px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Desconto</th>
+          <th style="text-align:right;padding:10px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Líquido</th>
+        </tr></thead>
+        <tbody id="cup-tbody"><tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">Carregando...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- SUB: VENDAS -->
   <div id="admin-tab-vendas-imp" style="display:none">
     <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r6);padding:20px;margin-bottom:22px">
@@ -635,6 +691,36 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
     <div class="mf">
       <button class="btn btn-ghost" onclick="closeModal('modal-editar-perfil')">Cancelar</button>
       <button class="btn btn-red" onclick="salvarEdicaoPerfil()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: IMPORTAR CUPONS (paste do PDF) -->
+<div class="overlay" id="modal-import-cupons">
+  <div class="modal" style="max-width:760px">
+    <div class="mhead">
+      <div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:4px">IMPORTAR</div>
+        <h2 style="font-size:16px;font-weight:700">🎟️ Importar relatório de cupons</h2>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-import-cupons')">×</button>
+    </div>
+    <div class="mb">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5">
+        Cole abaixo o texto extraído do PDF de cupons da loja. O parser identifica linhas no formato:<br>
+        <code style="background:var(--s3);padding:2px 6px;border-radius:3px;font-size:11px">7387 07/04/2026 23 - HILLARY CUPOM50OFF R$ 80,82 R$ 66,13</code>
+      </div>
+      <div class="fi"><label>Loja</label>
+        <select id="imp-cup-loja"><option value="">Selecione a loja...</option></select>
+      </div>
+      <div class="fi" style="margin-top:10px"><label>Texto colado do PDF</label>
+        <textarea id="imp-cup-texto" style="width:100%;background:var(--s3);border:1px solid var(--bdr);border-radius:var(--r3);color:var(--txt);font-family:'Sora',sans-serif;font-size:12px;padding:10px;min-height:200px;resize:vertical" placeholder="Cole aqui o texto do PDF (vendas linha a linha)..."></textarea>
+      </div>
+      <div id="imp-cup-preview" style="margin-top:12px;font-size:11px;color:var(--muted2)"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-import-cupons')">Cancelar</button>
+      <button class="btn btn-gold" onclick="processarImportCupons()">📥 Importar</button>
     </div>
   </div>
 </div>
@@ -1960,7 +2046,7 @@ function getLoja(id){
 
 // ========== ADMIN SUBTABS ==========
 function showAdminTab(tab, btn){
-  ['cadastros','historico','vendas-imp','gestao'].forEach(t=>{
+  ['cadastros','historico','cupons','vendas-imp','gestao'].forEach(t=>{
     const el=document.getElementById('admin-tab-'+t);
     if(el)el.style.display=t===tab?'block':'none';
   });
@@ -1969,6 +2055,237 @@ function showAdminTab(tab, btn){
   });
   if(btn){btn.classList.add('btn-red');btn.classList.remove('btn-ghost');}
   if(tab==='historico') popularHistorico();
+  if(tab==='cupons') popularCupons();
+}
+
+// ========== DASHBOARD CUPONS ==========
+let _todosCupons = [];
+
+function isoSemana(d){
+  // Retorna "YYYY-Www" formato ISO
+  const dt = new Date(d+'T12:00:00');
+  if(isNaN(dt)) return '';
+  const target = new Date(dt.valueOf());
+  const dayNr = (dt.getUTCDay()+6)%7;
+  target.setUTCDate(target.getUTCDate()-dayNr+3);
+  const firstThursday = new Date(Date.UTC(target.getUTCFullYear(),0,4));
+  const weekNum = 1 + Math.round(((target-firstThursday)/86400000 - 3 + ((firstThursday.getUTCDay()+6)%7))/7);
+  return target.getUTCFullYear()+'-W'+String(weekNum).padStart(2,'0');
+}
+
+async function popularCupons(){
+  const rows = await sbFetch('vendas_cupom?select=*&order=data_venda.desc&limit=10000', {method:'GET'});
+  _todosCupons = Array.isArray(rows) ? rows : [];
+  // Popula filtros
+  const semanas = [...new Set(_todosCupons.map(c=>c.semana).filter(Boolean))].sort().reverse();
+  const regioes = getRegioesSalvas();
+  const influs = [...new Set(_todosCupons.map(c=>c.influenciadora).filter(Boolean))].sort();
+  const lojas = [...new Set(_todosCupons.map(c=>c.loja_id).filter(Boolean))].sort();
+  const setSel = (id, items, mapFn) => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    const val = el.value;
+    el.innerHTML = '<option value="">Todas</option>' + items.map(mapFn).join('');
+    if(items.some(i=>(typeof i==='string'?i:i[0])===val)) el.value = val;
+  };
+  setSel('cup-semana', semanas, s=>`<option value="${s}">${s}</option>`);
+  setSel('cup-regiao', Object.keys(regioes), r=>`<option value="${r}">${regioes[r]||r.toUpperCase()}</option>`);
+  setSel('cup-influ', influs, n=>`<option value="${n}">${n}</option>`);
+  setSel('cup-loja', lojas, id=>{const lo=getLoja(id);return `<option value="${id}">${lo?lo.n:id}</option>`;});
+  // Popula select de loja no modal de import
+  const selImp = document.getElementById('imp-cup-loja');
+  if(selImp){
+    selImp.innerHTML = '<option value="">Selecione a loja...</option>' + getAllLojas().sort((a,b)=>a.n.localeCompare(b.n)).map(l=>`<option value="${l.id}">${l.n}</option>`).join('');
+  }
+  renderCupons();
+}
+
+function renderCupons(){
+  const fDe = document.getElementById('cup-de').value||'';
+  const fAte = document.getElementById('cup-ate').value||'';
+  const fSem = document.getElementById('cup-semana').value||'';
+  const fReg = document.getElementById('cup-regiao').value||'';
+  const fInf = document.getElementById('cup-influ').value||'';
+  const fLoja = document.getElementById('cup-loja').value||'';
+  const fBusca = (document.getElementById('cup-busca').value||'').toLowerCase().trim();
+
+  let lista = _todosCupons.filter(c=>{
+    if(fDe && c.data_venda < fDe) return false;
+    if(fAte && c.data_venda > fAte) return false;
+    if(fSem && c.semana !== fSem) return false;
+    if(fInf && c.influenciadora !== fInf) return false;
+    if(fLoja && c.loja_id !== fLoja) return false;
+    if(fBusca && !String(c.cupom||'').toLowerCase().includes(fBusca)) return false;
+    if(fReg){
+      const lo = getLoja(c.loja_id);
+      if(!lo || String(lo.r||'').toLowerCase() !== fReg.toLowerCase()) return false;
+    }
+    return true;
+  });
+
+  // Stats
+  const totalVendas = lista.length;
+  const desconto = lista.reduce((s,c)=>s+parseFloat(c.desconto||0),0);
+  const liquido = lista.reduce((s,c)=>s+parseFloat(c.total_liquido||0),0);
+  const tm = totalVendas ? liquido/totalVendas : 0;
+  const influAtivas = new Set(lista.filter(c=>c.influenciadora).map(c=>c.influenciadora)).size;
+  const stats = [
+    {label:'Vendas com cupom', val: totalVendas, color:'var(--gold)'},
+    {label:'Desconto total', val: 'R$ '+desconto.toFixed(2).replace('.',','), color:'var(--orange)'},
+    {label:'Líquido total', val: 'R$ '+liquido.toFixed(2).replace('.',','), color:'var(--green)'},
+    {label:'Ticket médio', val: 'R$ '+tm.toFixed(2).replace('.',','), color:'var(--rl)'},
+    {label:'Influ ativas', val: influAtivas, color:'var(--gold)'},
+  ];
+  const elS = document.getElementById('cup-stats');
+  if(elS) elS.innerHTML = stats.map(s=>`
+    <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r4);padding:14px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">${s.label}</div>
+      <div style="font-size:18px;font-weight:700;color:${s.color}">${s.val}</div>
+    </div>`).join('');
+
+  // Ranking de influenciadoras
+  const porInflu = {};
+  lista.forEach(c=>{
+    const n = c.influenciadora || '(cupom genérico)';
+    if(!porInflu[n]) porInflu[n] = {nome:n, vendas:0, desconto:0, liquido:0};
+    porInflu[n].vendas++;
+    porInflu[n].desconto += parseFloat(c.desconto||0);
+    porInflu[n].liquido += parseFloat(c.total_liquido||0);
+  });
+  const ranking = Object.values(porInflu).sort((a,b)=>b.liquido-a.liquido);
+  const maxLiq = ranking[0]?.liquido || 1;
+  const medals = ['🥇','🥈','🥉'];
+  const elR = document.getElementById('cup-ranking');
+  if(elR){
+    elR.innerHTML = ranking.length ? ranking.map((r,i)=>{
+      const pct = Math.round((r.liquido/maxLiq)*100);
+      const medal = medals[i]||`#${i+1}`;
+      const inf = getInflu(r.nome);
+      const regiao = inf?.regiao;
+      return `<div style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1">
+            <span style="font-size:18px">${medal}</span>
+            <div style="font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.nome}</div>
+            ${regiao?`<span class="rb ${regiaoClass(regiao)}" style="font-size:9px">${regiaoLabel(regiao)}</span>`:''}
+          </div>
+          <div style="display:flex;gap:14px;font-size:12px;flex-shrink:0">
+            <span style="color:var(--muted)">${r.vendas} ${r.vendas===1?'venda':'vendas'}</span>
+            <span style="color:var(--orange)">- R$ ${r.desconto.toFixed(2).replace('.',',')}</span>
+            <span style="color:var(--green);font-weight:700">R$ ${r.liquido.toFixed(2).replace('.',',')}</span>
+          </div>
+        </div>
+        <div style="height:6px;background:var(--s3);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${i===0?'var(--gold)':i===1?'rgba(255,255,255,.4)':i===2?'var(--red)':'rgba(232,184,109,.35)'};transition:width .4s ease"></div>
+        </div>
+      </div>`;
+    }).join('') : '<div style="color:var(--muted);font-size:13px;text-align:center;padding:30px">Nenhuma venda no filtro selecionado.</div>';
+  }
+
+  // Tabela
+  const tbody = document.getElementById('cup-tbody');
+  if(!tbody) return;
+  if(!lista.length){
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">Nenhuma venda neste filtro.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = lista.map(c=>{
+    const loja = getLoja(c.loja_id);
+    return `<tr>
+      <td style="padding:9px 12px;border-bottom:1px solid var(--bdr);font-size:12px">${c.data_venda?formatData(c.data_venda):'—'}</td>
+      <td style="padding:9px 12px;border-bottom:1px solid var(--bdr);font-size:12px">${c.cliente||'—'}</td>
+      <td style="padding:9px 12px;border-bottom:1px solid var(--bdr);font-weight:600;color:var(--gold);font-size:12px">${c.cupom||'—'}</td>
+      <td style="padding:9px 12px;border-bottom:1px solid var(--bdr);font-size:12px">${c.influenciadora||'<span style=\"color:var(--muted)\">—</span>'}</td>
+      <td style="padding:9px 12px;border-bottom:1px solid var(--bdr);font-size:12px">${loja?loja.n:(c.loja_nome||c.loja_id||'—')}</td>
+      <td style="padding:9px 12px;border-bottom:1px solid var(--bdr);text-align:right;color:var(--orange);font-size:12px">R$ ${parseFloat(c.desconto||0).toFixed(2).replace('.',',')}</td>
+      <td style="padding:9px 12px;border-bottom:1px solid var(--bdr);text-align:right;font-weight:700;color:var(--green)">R$ ${parseFloat(c.total_liquido||0).toFixed(2).replace('.',',')}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportarCuponsCSV(){
+  const fDe = document.getElementById('cup-de').value||'';
+  const fAte = document.getElementById('cup-ate').value||'';
+  const fSem = document.getElementById('cup-semana').value||'';
+  const fReg = document.getElementById('cup-regiao').value||'';
+  const fInf = document.getElementById('cup-influ').value||'';
+  const fLoja = document.getElementById('cup-loja').value||'';
+  const fBusca = (document.getElementById('cup-busca').value||'').toLowerCase().trim();
+  const lista = _todosCupons.filter(c=>{
+    if(fDe && c.data_venda < fDe) return false;
+    if(fAte && c.data_venda > fAte) return false;
+    if(fSem && c.semana !== fSem) return false;
+    if(fInf && c.influenciadora !== fInf) return false;
+    if(fLoja && c.loja_id !== fLoja) return false;
+    if(fBusca && !String(c.cupom||'').toLowerCase().includes(fBusca)) return false;
+    if(fReg){ const lo = getLoja(c.loja_id); if(!lo || String(lo.r||'').toLowerCase()!==fReg.toLowerCase()) return false; }
+    return true;
+  });
+  if(!lista.length){showN('⚠️ Nada pra exportar');return;}
+  const head = ['Data','Cliente','Cupom','Influenciadora','Loja','Região','Semana','Desconto','Líquido'];
+  const linhas = [head, ...lista.map(c=>{
+    const lo = getLoja(c.loja_id);
+    return [c.data_venda||'', c.cliente||'', c.cupom||'', c.influenciadora||'', lo?lo.n:c.loja_nome||c.loja_id, lo?String(lo.r||'').toUpperCase():'', c.semana||'', parseFloat(c.desconto||0).toFixed(2), parseFloat(c.total_liquido||0).toFixed(2)];
+  })];
+  const csv = linhas.map(l=>l.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cupons-'+new Date().toISOString().split('T')[0]+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  showN(`✅ ${lista.length} cupons exportados`);
+}
+
+function abrirImportCupons(){
+  document.getElementById('imp-cup-texto').value='';
+  document.getElementById('imp-cup-preview').textContent='';
+  document.getElementById('modal-import-cupons').classList.add('open');
+}
+
+async function processarImportCupons(){
+  const lojaId = document.getElementById('imp-cup-loja').value;
+  if(!lojaId){showN('⚠️ Selecione a loja');return;}
+  const txt = document.getElementById('imp-cup-texto').value;
+  if(!txt.trim()){showN('⚠️ Cole o texto do PDF');return;}
+  const loja = getLoja(lojaId);
+  // Regex para linhas tipo: "7387 07/04/2026 23 - HILLARY CUPOM50OFF R$ 80,82 R$ 66,13"
+  // Formato: VENDA DD/MM/YYYY CLIENTE_PARTES CUPOM R$ DESCONTO R$ LIQUIDO
+  const re = /^\s*(\d+)\s+(\d{2}\/\d{2}\/\d{4})\s+(.+?)\s+([A-Z0-9_-]{3,})\s+R\$\s*([\d.,]+)\s+R\$\s*([\d.,]+)\s*$/i;
+  const linhas = txt.split('\n');
+  const vendas = [];
+  for(const l of linhas){
+    const m = l.match(re);
+    if(!m) continue;
+    const [, , dataBR, cliente, cupom, desc, liq] = m;
+    const [d, mes, ano] = dataBR.split('/');
+    const dataISO = `${ano}-${mes}-${d}`;
+    const cupomUp = cupom.toUpperCase().trim();
+    // Mapeia influenciadora pelo cupom
+    const infMatch = influ.find(i => String(i.cupom||'').toUpperCase().trim() === cupomUp);
+    vendas.push({
+      loja_id: lojaId,
+      loja_nome: loja?loja.n:'',
+      data_venda: dataISO,
+      cliente: cliente.trim().replace(/^\d+\s*-\s*/,''),
+      cupom: cupomUp,
+      desconto: parseFloat(desc.replace('.','').replace(',','.'))||0,
+      total_liquido: parseFloat(liq.replace('.','').replace(',','.'))||0,
+      semana: isoSemana(dataISO),
+      influenciadora: infMatch ? infMatch.nome : '',
+    });
+  }
+  if(!vendas.length){showN('⚠️ Nenhuma linha válida encontrada. Verifique o formato.');return;}
+  showN(`💾 Importando ${vendas.length} vendas...`);
+  // Upsert no Supabase (em batch)
+  const r = await sbFetch('vendas_cupom?on_conflict=loja_id,data_venda,cliente,cupom,total_liquido', {
+    method:'POST',
+    headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
+    body: JSON.stringify(vendas)
+  });
+  if(r === null){showN('⚠️ Falha ao gravar no banco');return;}
+  showN(`✅ ${vendas.length} vendas importadas`);
+  closeModal('modal-import-cupons');
+  popularCupons();
 }
 
 // ========== DASHBOARD HISTÓRICO ==========
