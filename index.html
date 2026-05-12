@@ -1389,7 +1389,25 @@ let cidadeSel='cwb', lojaSel=null;
 function getRegioesSalvas(){
   const base = { cwb: 'Curitiba & Região', fln: 'Floripa & Região' };
   const salvas = JSON.parse(localStorage.getItem('sushi_regioes')||'{}');
-  return { ...base, ...salvas };
+  // Normaliza: chaves sempre em minúsculo, deduplica conflitos
+  const merged = { ...base };
+  let mudou = false;
+  for(const [k, v] of Object.entries(salvas)){
+    const klow = String(k||'').toLowerCase().trim();
+    if(!klow) { mudou = true; continue; }
+    if(k !== klow) mudou = true;
+    if(!merged[klow]) merged[klow] = v;
+  }
+  // Re-salva se houve normalização (limpa duplicatas maiusculas/minusculas no localStorage)
+  if(mudou){
+    const limpo = {};
+    Object.keys(salvas).forEach(k => {
+      const klow = String(k||'').toLowerCase().trim();
+      if(klow && !limpo[klow]) limpo[klow] = salvas[k];
+    });
+    localStorage.setItem('sushi_regioes', JSON.stringify(limpo));
+  }
+  return merged;
 }
 
 function atualizarDatalistsRegioes(){
