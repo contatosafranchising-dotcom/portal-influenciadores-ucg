@@ -1722,27 +1722,42 @@ function cancelarAgendamento(id){
 }
 
 // ========== PÁGINA: CONTEÚDOS ==========
-// Popula grid de lojas (checkboxes) baseado na região da influenciadora selecionada
+// Popula grid de lojas (checkboxes) — TODAS as lojas, com badge da região da influenciadora
 function atualizarLojasCollab(){
   const grid = document.getElementById('cont-lojas-grid');
   if(!grid) return;
-  const nome = document.getElementById('cont-nome').value;
-  if(!nome){
-    grid.innerHTML = '<div style="grid-column:1/-1;color:var(--muted);font-size:12px;text-align:center;padding:14px">Selecione seu nome para ver as lojas da sua região.</div>';
+  // Fonte de lojas: prefere o estado atual (LOJAS+lojasExtra); fallback pro seed estático
+  let todasLojas = getAllLojas();
+  if(!todasLojas.length){
+    todasLojas = (typeof LOJAS_REDE !== 'undefined' ? LOJAS_REDE : []).map(seed => ({
+      id: seed.id, n: seed.n, r: seed.r, ig: seed.ig||'', end: seed.end||'',
+      w: seed.w||'', l: seed.l||'', status: seed.status||'ativa'
+    }));
+  }
+  if(!todasLojas.length){
+    grid.innerHTML = '<div style="grid-column:1/-1;color:var(--muted);font-size:12px;text-align:center;padding:14px">⏳ Carregando lojas...</div>';
     return;
   }
-  const inf = getInflu(nome);
-  if(!inf){grid.innerHTML='<div style="grid-column:1/-1;color:#ff6b6b;font-size:12px;text-align:center;padding:14px">Influenciadora não encontrada.</div>';return;}
-  // Lojas da mesma região da influenciadora (ativas)
-  const regiao = String(inf.regiao||'').toLowerCase();
-  const lojasReg = getAllLojas().filter(l => String(l.r||'').toLowerCase()===regiao && l.status!=='bloqueada');
-  if(!lojasReg.length){grid.innerHTML='<div style="grid-column:1/-1;color:#ffa500;font-size:12px;text-align:center;padding:14px">⚠️ Nenhuma loja ativa na sua região ('+regiao.toUpperCase()+').</div>';return;}
-  grid.innerHTML = lojasReg.map(l=>`
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r3);padding:8px 10px;font-size:12px">
-      <input type="checkbox" class="cont-loja-cb" value="${l.id}" style="accent-color:var(--rl);width:16px;height:16px;cursor:pointer">
-      <span>${l.n}</span>
-    </label>
-  `).join('');
+  const nome = document.getElementById('cont-nome').value;
+  const inf = nome ? getInflu(nome) : null;
+  const regiaoInf = inf ? String(inf.regiao||'').toLowerCase() : null;
+  // Ordena: lojas da região da influ primeiro, depois o resto
+  const lojasOrdem = [...todasLojas].sort((a,b)=>{
+    const ar = String(a.r||'').toLowerCase()===regiaoInf ? 0 : 1;
+    const br = String(b.r||'').toLowerCase()===regiaoInf ? 0 : 1;
+    return ar - br || a.n.localeCompare(b.n);
+  });
+  const hint = regiaoInf
+    ? `<div style="grid-column:1/-1;font-size:11px;color:var(--muted);margin-bottom:4px">Lojas da sua região (${regiaoInf.toUpperCase()}) aparecem primeiro. Você pode marcar lojas de qualquer região.</div>`
+    : `<div style="grid-column:1/-1;font-size:11px;color:var(--muted);margin-bottom:4px">Selecione seu nome para destacar as lojas da sua região.</div>`;
+  grid.innerHTML = hint + lojasOrdem.map(l=>{
+    const daRegiao = String(l.r||'').toLowerCase()===regiaoInf;
+    const bloq = l.status==='bloqueada';
+    return `<label style="display:flex;align-items:center;gap:8px;cursor:${bloq?'not-allowed':'pointer'};background:${daRegiao?'rgba(200,16,46,.08)':'var(--s2)'};border:1px solid ${daRegiao?'rgba(200,16,46,.25)':'var(--bdr)'};border-radius:var(--r3);padding:8px 10px;font-size:12px;${bloq?'opacity:0.5;':''}">
+      <input type="checkbox" class="cont-loja-cb" value="${l.id}" ${bloq?'disabled':''} style="accent-color:var(--rl);width:16px;height:16px;cursor:${bloq?'not-allowed':'pointer'}">
+      <span>${l.n}${bloq?' 🔒':''} <span style="font-size:10px;color:var(--muted)">${String(l.r||'').toUpperCase()}</span></span>
+    </label>`;
+  }).join('');
 }
 
 function addConteudo(){
