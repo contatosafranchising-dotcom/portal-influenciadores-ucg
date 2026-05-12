@@ -1696,6 +1696,42 @@ function notificarAdminWpp(tipo, ag, observacao){
   setTimeout(()=>document.body.removeChild(a), 500);
 }
 
+// Notificação dedicada quando influenciadora solicita collab em 2+ lojas:
+// envia mensagem clara pro admin com lista de lojas + contato da menina
+function notificarMultiCollabAdmin(nomeInflu, inf, plataforma, link, lojasIds, statusCollab){
+  const wpp = getAdminWpp();
+  if(!wpp) return;
+  const lojasDetalhe = lojasIds.map(id => {
+    const lo = getLoja(id);
+    if(!lo) return '- '+id;
+    return `- *${lo.n}* (${String(lo.r||'').toUpperCase()})${lo.w?' — WhatsApp loja: '+lo.w:''}`;
+  }).join('\n');
+  const linhas = [
+    `*⭐ [MULTIPLAS COLLABS SOLICITADAS]* - S.A. Casa do Sushi`,
+    '',
+    `*Influenciadora:* ${nomeInflu}${inf?.insta?' ('+inf.insta+')':''}`,
+    inf?.wpp?`*WhatsApp dela:* ${inf.wpp}`:'',
+    `*Plataforma:* ${plataforma}`,
+    `*Link do post:* ${link}`,
+    statusCollab?`*Status atual:* ${statusCollab}`:'',
+    '',
+    `*Solicitou collab em ${lojasIds.length} lojas:*`,
+    lojasDetalhe,
+    '',
+    `_Acao sugerida: contatar cada loja individualmente para alinhar o aceite da collab._`,
+    '',
+    `_Registrado em: ${new Date().toLocaleString('pt-BR')}_`,
+  ].filter(Boolean);
+  const msg = linhas.join('\n');
+  const a = document.createElement('a');
+  a.href = 'https://wa.me/55' + wpp + '?text=' + encodeURIComponent(msg);
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>document.body.removeChild(a), 500);
+}
+
 function confirmarRecebimento(id){
   const ag=agendamentos.find(a=>a.id===id);
   if(!ag)return;
@@ -1801,7 +1837,9 @@ function addConteudo(){
       }
     }
   } else if(lojasMarcadas.length > 1){
-    mensagemExtra = ` · Marcadas ${lojasMarcadas.length} lojas`;
+    // Múltiplas lojas: notifica admin com mensagem DEDICADA listando todas
+    notificarMultiCollabAdmin(nome, inf, plat, link, lojasMarcadas, collab);
+    mensagemExtra = ` · Avisamos admin de ${lojasMarcadas.length} collabs`;
   }
   document.getElementById('cont-link').value='';
   document.getElementById('cont-nome').value='';
