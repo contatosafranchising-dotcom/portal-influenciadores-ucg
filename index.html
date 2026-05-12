@@ -1107,6 +1107,7 @@ async function syncFromSheets() {
         ss('sushi_vendas', vendas);
       }
     }
+    limparLojasExtraDuplicadas();
     setSyncStatus('synced');
     return true;
   } catch(e) {
@@ -1845,7 +1846,37 @@ function renderConteudos(){
 
 // ========== LOJAS DINÂMICAS ==========
 let lojasExtra = JSON.parse(localStorage.getItem('sushi_lojas_extra')||'[]');
-function getAllLojas(){return [...LOJAS,...lojasExtra];}
+
+// Limpa duplicatas em lojasExtra que já existem em LOJAS (vindas de Supabase)
+function limparLojasExtraDuplicadas(){
+  if(!lojasExtra.length) return;
+  const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
+  const idsLojas = new Set(LOJAS.map(l=>l.id));
+  const nomesLojas = new Set(LOJAS.map(l=>norm(l.n)));
+  const antes = lojasExtra.length;
+  lojasExtra = lojasExtra.filter(le => !idsLojas.has(le.id) && !nomesLojas.has(norm(le.n)));
+  if(lojasExtra.length !== antes){
+    localStorage.setItem('sushi_lojas_extra', JSON.stringify(lojasExtra));
+    console.log('[dedup] Removidas', antes-lojasExtra.length, 'lojas duplicadas de localStorage');
+  }
+}
+
+function getAllLojas(){
+  // Deduplica por id e por nome normalizado (evita "Anália Franco" duplicada de testes antigos)
+  const vistos = new Set();
+  const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
+  const out = [];
+  for(const l of [...LOJAS, ...lojasExtra]){
+    if(!l || !l.id) continue;
+    const chave = l.id + '|' + norm(l.n);
+    const chaveNome = norm(l.n);
+    if(vistos.has(l.id) || vistos.has(chaveNome)) continue;
+    vistos.add(l.id);
+    vistos.add(chaveNome);
+    out.push(l);
+  }
+  return out;
+}
 
 function getLoja(id){
   if(!id) return null;
