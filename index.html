@@ -198,7 +198,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
   <div style="text-align:right">
     <div style="font-size:11px;color:var(--muted)">UGC · Campanha 2026</div>
     <div id="sync-indicator" style="font-size:10px;color:var(--muted);margin-top:2px;cursor:pointer" onclick="syncNow()" title="Clique para sincronizar">💾 Dados locais</div>
-    <div style="font-size:9px;color:var(--muted);opacity:0.5">v2026.05.12-6eb9013</div>
+    <div style="font-size:9px;color:var(--muted);opacity:0.5">v2026.05.12-final</div>
   </div>
 </div>
 
@@ -1190,7 +1190,7 @@ function goPage(id, el){
   document.getElementById('page-'+id).classList.add('active');
   if(el)el.classList.add('active');
   if(id==='influenciadoras')renderInflu();
-  if(id==='agendar'){renderPendentes();renderLojas('cwb');populateInfluSelect('ag-influencer');renderCidadesExtra();}
+  if(id==='agendar'){renderPendentes();renderCidadesBtns();renderLojas(cidadeSel||'cwb');populateInfluSelect('ag-influencer');renderCidadesExtra();}
   if(id==='conteudos'){populateInfluSelect('cont-nome');renderConteudos();atualizarLojasCollab();renderFiltrosEstados();}
   if(id==='resultados'){renderResultados();}
   if(id==='admin'){
@@ -1443,14 +1443,26 @@ function renderCidadesBtns(){
   const el = document.getElementById('cidades-btns');
   if(!el) return;
   const regioes = getRegioesSalvas();
-  // Pega regiões que têm lojas
+  // Ordem fixa pra ficar previsível: CWB, PR, FLN, SC, SP, MT, GO, RS, depois extras alfabético
+  const ordem = ['cwb','pr','fln','sc','sp','mt','go','rs'];
+  const codigos = Object.keys(regioes);
+  const ordenados = [
+    ...ordem.filter(c => codigos.includes(c)),
+    ...codigos.filter(c => !ordem.includes(c)).sort()
+  ];
+  // Conta lojas por região (só pra mostrar contador, não filtra)
   const todasLojas = getAllLojas();
-  const regioesComLojas = Object.keys(regioes).filter(r => todasLojas.some(l => l.r === r));
-  // Se não tem nenhuma ainda, mostra todas as regiões
-  const lista = regioesComLojas.length > 0 ? regioesComLojas : Object.keys(regioes);
-  el.innerHTML = lista.map((r,i) =>
-    `<button class="cidade-btn ${i===0&&!cidadeSel?'active':cidadeSel===r?'active':''}" onclick="selecionarCidade('${r}',this)">📍 ${regioes[r]||r.toUpperCase()}</button>`
-  ).join('');
+  const cont = {};
+  todasLojas.forEach(l => {
+    const r = String(l.r||'').toLowerCase();
+    if(r) cont[r] = (cont[r]||0)+1;
+  });
+  el.innerHTML = ordenados.map((r,i) => {
+    const ativa = cidadeSel===r || (i===0 && !cidadeSel);
+    const c = cont[r]||0;
+    const numLabel = c ? `<span style="font-size:9px;opacity:0.6;margin-left:4px">${c}</span>` : '';
+    return `<button class="cidade-btn ${ativa?'active':''}" onclick="selecionarCidade('${r}',this)">📍 ${regioes[r]||r.toUpperCase()}${numLabel}</button>`;
+  }).join('');
   // Também atualiza o select de nova influenciadora
   const sel = document.getElementById('n-reg');
   if(sel){
