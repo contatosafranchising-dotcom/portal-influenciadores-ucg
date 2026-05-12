@@ -726,6 +726,25 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
   </div>
 </div>
 
+<!-- MODAL: LOJAS DA INFLUENCIADORA (em Resultados) -->
+<div class="overlay" id="modal-res-lojas">
+  <div class="modal" style="max-width:560px">
+    <div class="mhead">
+      <div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:4px">VENDAS POR LOJA</div>
+        <h2 id="res-lojas-titulo" style="font-size:16px;font-weight:700">—</h2>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-res-lojas')">×</button>
+    </div>
+    <div class="mb">
+      <div id="res-lojas-conteudo"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-res-lojas')">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: EDITAR LOJA -->
 <div class="overlay" id="modal-editar-loja">
   <div class="modal">
@@ -2826,7 +2845,7 @@ async function renderResultados(){
   const agg = {};
   vendas.forEach(v=>{
     const n = v.nome; if(!n) return;
-    if(!agg[n]) agg[n] = {nome:n, regiao:v.regiao||(getInflu(n)?.regiao||''), pedidos:0, valor:0, semanas:new Set()};
+    if(!agg[n]) agg[n] = {nome:n, regiao:v.regiao||(getInflu(n)?.regiao||''), pedidos:0, valor:0, semanas:new Set(), lojas:{}};
     agg[n].pedidos += parseInt(v.pedidos)||0;
     agg[n].valor   += parseFloat(v.valor)||0;
     if(v.semana) agg[n].semanas.add(v.semana);
@@ -2834,11 +2853,18 @@ async function renderResultados(){
   cupons.forEach(c=>{
     const n = c.influenciadora; if(!n) return; // só conta cupom vinculado a influ cadastrada
     const inf = getInflu(n);
-    if(!agg[n]) agg[n] = {nome:n, regiao:inf?.regiao||'', pedidos:0, valor:0, semanas:new Set()};
+    if(!agg[n]) agg[n] = {nome:n, regiao:inf?.regiao||'', pedidos:0, valor:0, semanas:new Set(), lojas:{}};
     agg[n].pedidos += 1;
     agg[n].valor   += parseFloat(c.total_liquido)||0;
     if(c.semana) agg[n].semanas.add(c.semana);
+    const lid = c.loja_id||c.loja_nome||'—';
+    if(!agg[n].lojas[lid]) agg[n].lojas[lid] = {id:lid, nome:(getLoja(lid)?.n)||c.loja_nome||lid, vendas:0, valor:0};
+    agg[n].lojas[lid].vendas += 1;
+    agg[n].lojas[lid].valor  += parseFloat(c.total_liquido)||0;
   });
+
+  // Salva pra usar no modal "Ver lojas"
+  window._resAgg = agg;
 
   const sorted = Object.values(agg).sort((a,b)=>b.valor-a.valor);
 
@@ -2855,6 +2881,7 @@ async function renderResultados(){
   ranking.innerHTML=sorted.map((r,i)=>{
     const pct=Math.round((r.valor/maxVal)*100);
     const medal=medals[i]||`#${i+1}`;
+    const qtdLojas = Object.keys(r.lojas||{}).length;
     return `<div style="background:var(--s1);border:1px solid ${i===0?'rgba(232,184,109,.35)':i===1?'rgba(255,255,255,.12)':i===2?'rgba(200,16,46,.2)':'var(--bdr)'};border-radius:var(--r6);padding:18px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div style="font-size:22px">${medal}</div>
@@ -2863,9 +2890,10 @@ async function renderResultados(){
       <div style="font-size:14px;font-weight:700;margin-bottom:4px">${r.nome}</div>
       <div style="font-size:20px;font-weight:700;color:var(--gold);margin-bottom:4px">R$ ${r.valor.toFixed(2)}</div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px">${r.pedidos} venda${r.pedidos!==1?'s':''} · ticket médio R$ ${r.pedidos?(r.valor/r.pedidos).toFixed(2):'—'}</div>
-      <div style="height:4px;background:var(--s3);border-radius:2px;overflow:hidden">
+      <div style="height:4px;background:var(--s3);border-radius:2px;overflow:hidden;margin-bottom:12px">
         <div style="height:100%;width:${pct}%;background:${i===0?'var(--gold)':i===1?'rgba(255,255,255,.4)':'var(--red)'};border-radius:2px;transition:width .6s ease"></div>
       </div>
+      ${qtdLojas?`<button class="btn btn-ghost btn-sm" style="width:100%;font-size:11px" onclick="verLojasInflu('${String(r.nome).replace(/'/g,"\\'")}')">🏪 Ver ${qtdLojas} loja${qtdLojas!==1?'s':''}</button>`:''}
     </div>`;
   }).join('');
 
@@ -2912,6 +2940,40 @@ async function renderResultados(){
     <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);font-weight:700;color:var(--gold)">R$ ${v.valor.toFixed(2)}</td>
     <td style="padding:10px 12px;border-bottom:1px solid var(--bdr);color:var(--muted)">${v.ticket!==null?'R$ '+v.ticket.toFixed(2):'—'}</td>
   </tr>`).join('');
+}
+
+function verLojasInflu(nome){
+  const agg = window._resAgg && window._resAgg[nome];
+  const tit = document.getElementById('res-lojas-titulo');
+  const cont = document.getElementById('res-lojas-conteudo');
+  if(!agg || !cont){return;}
+  tit.textContent = `${nome} — onde converteu`;
+  const lojas = Object.values(agg.lojas||{}).sort((a,b)=>b.valor-a.valor);
+  // Lista vendas individuais por loja (do _todosCupons)
+  const cupons = (_todosCupons||[]).filter(c => c.influenciadora === nome);
+  if(!lojas.length){
+    cont.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">Sem detalhe de loja.</div>';
+  } else {
+    cont.innerHTML = lojas.map(lo=>{
+      const vendasLoja = cupons.filter(c => (c.loja_id||c.loja_nome||'—')===lo.id).sort((a,b)=>(b.data_venda||'').localeCompare(a.data_venda||''));
+      return `<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r4);padding:14px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:10px;flex-wrap:wrap">
+          <div style="font-weight:700;font-size:14px">🏪 ${lo.nome}</div>
+          <div style="display:flex;gap:14px;font-size:12px;flex-wrap:wrap">
+            <div><span style="color:var(--muted)">Vendas: </span><b>${lo.vendas}</b></div>
+            <div><span style="color:var(--muted)">Total: </span><b style="color:var(--gold)">R$ ${lo.valor.toFixed(2).replace('.',',')}</b></div>
+          </div>
+        </div>
+        ${vendasLoja.length?`<div style="border-top:1px solid var(--bdr);padding-top:8px;margin-top:6px;font-size:11px">
+          ${vendasLoja.map(c=>`<div style="display:flex;justify-content:space-between;padding:4px 0;color:var(--muted2)">
+            <span>${formatData(c.data_venda||'')} · ${c.cliente||'—'} · <span style="color:var(--gold)">${c.cupom||''}</span></span>
+            <span style="color:var(--green);font-weight:600">R$ ${parseFloat(c.total_liquido||0).toFixed(2).replace('.',',')}</span>
+          </div>`).join('')}
+        </div>`:''}
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('modal-res-lojas').classList.add('open');
 }
 
 // ========== ADMIN RENDER (ATUALIZADO) ==========
