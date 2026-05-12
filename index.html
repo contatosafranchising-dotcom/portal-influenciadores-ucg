@@ -289,7 +289,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
     <div class="form-grid">
       <div class="fi">
         <label>Seu nome</label>
-        <select id="cont-nome">
+        <select id="cont-nome" onchange="atualizarLojasCollab()">
           <option value="">Selecione...</option>
         </select>
       </div>
@@ -312,6 +312,11 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
           <option value="Não aceita">❌ Não aceitou a collab</option>
           <option value="Pendente">⏳ Aguardando resposta</option>
         </select>
+      </div>
+      <div class="fi form-full">
+        <label>🏪 Lojas em que você solicitou collab nesta postagem (selecione 1 ou mais)</label>
+        <div id="cont-lojas-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px;max-height:240px;overflow-y:auto;background:var(--s3);border:1px solid var(--bdr);border-radius:var(--r3);padding:10px"></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">Se marcar apenas <strong>1 loja</strong>, vamos abrir o WhatsApp dela pra você reforçar o pedido de aceite da collab.</div>
       </div>
     </div>
     <div style="margin-top:14px;">
@@ -767,8 +772,8 @@ const TABLE_MAP = {
   'Conteudos': {
     table: 'conteudos',
     pk: null,
-    fromRow: r => ({nome_influenciadora: r[0]||'', regiao: String(r[1]||'').toLowerCase(), plataforma: r[2]||'Instagram', link_post: r[3]||'', collab: r[4]||'', data_post: r[5]||null, observacoes: r[6]||''}),
-    toLegacy: row => ({'Nome Influenciadora':row.nome_influenciadora,'Região':String(row.regiao||'').toUpperCase(),'Plataforma':row.plataforma,'Link do Post':row.link_post,'Collab':row.collab||'','Data Post':row.data_post||'','Observações':row.observacoes||''}),
+    fromRow: r => ({nome_influenciadora: r[0]||'', regiao: String(r[1]||'').toLowerCase(), plataforma: r[2]||'Instagram', link_post: r[3]||'', collab: r[4]||'', data_post: r[5]||null, observacoes: r[6]||'', lojas_collab: r[7]||[]}),
+    toLegacy: row => ({'Nome Influenciadora':row.nome_influenciadora,'Região':String(row.regiao||'').toUpperCase(),'Plataforma':row.plataforma,'Link do Post':row.link_post,'Collab':row.collab||'','Data Post':row.data_post||'','Observações':row.observacoes||'','Lojas Collab':row.lojas_collab||[]}),
   },
   'Vendas': {
     table: 'vendas',
@@ -1181,7 +1186,7 @@ function goPage(id, el){
   if(el)el.classList.add('active');
   if(id==='influenciadoras')renderInflu();
   if(id==='agendar'){renderPendentes();renderLojas('cwb');populateInfluSelect('ag-influencer');renderCidadesExtra();}
-  if(id==='conteudos'){populateInfluSelect('cont-nome');renderConteudos();}
+  if(id==='conteudos'){populateInfluSelect('cont-nome');renderConteudos();atualizarLojasCollab();}
   if(id==='resultados'){renderResultados();}
   if(id==='admin'){renderAdmin();}
 }
@@ -1717,29 +1722,76 @@ function cancelarAgendamento(id){
 }
 
 // ========== PÁGINA: CONTEÚDOS ==========
+// Popula grid de lojas (checkboxes) baseado na região da influenciadora selecionada
+function atualizarLojasCollab(){
+  const grid = document.getElementById('cont-lojas-grid');
+  if(!grid) return;
+  const nome = document.getElementById('cont-nome').value;
+  if(!nome){
+    grid.innerHTML = '<div style="grid-column:1/-1;color:var(--muted);font-size:12px;text-align:center;padding:14px">Selecione seu nome para ver as lojas da sua região.</div>';
+    return;
+  }
+  const inf = getInflu(nome);
+  if(!inf){grid.innerHTML='<div style="grid-column:1/-1;color:#ff6b6b;font-size:12px;text-align:center;padding:14px">Influenciadora não encontrada.</div>';return;}
+  // Lojas da mesma região da influenciadora (ativas)
+  const regiao = String(inf.regiao||'').toLowerCase();
+  const lojasReg = getAllLojas().filter(l => String(l.r||'').toLowerCase()===regiao && l.status!=='bloqueada');
+  if(!lojasReg.length){grid.innerHTML='<div style="grid-column:1/-1;color:#ffa500;font-size:12px;text-align:center;padding:14px">⚠️ Nenhuma loja ativa na sua região ('+regiao.toUpperCase()+').</div>';return;}
+  grid.innerHTML = lojasReg.map(l=>`
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r3);padding:8px 10px;font-size:12px">
+      <input type="checkbox" class="cont-loja-cb" value="${l.id}" style="accent-color:var(--rl);width:16px;height:16px;cursor:pointer">
+      <span>${l.n}</span>
+    </label>
+  `).join('');
+}
+
 function addConteudo(){
   const nome=document.getElementById('cont-nome').value;
   const link=document.getElementById('cont-link').value.trim();
   const plat=document.getElementById('cont-plat').value;
   const collab=document.getElementById('cont-collab').value;
+  const lojasMarcadas = [...document.querySelectorAll('.cont-loja-cb:checked')].map(cb=>cb.value);
   if(!nome||!link){showN('⚠️ Selecione seu nome e cole o link!');return;}
   if(!link.startsWith('http')){showN('⚠️ Link inválido. Deve começar com https://');return;}
   const inf=getInflu(nome);
   const regiao = inf?inf.regiao:'';
-  conteudos.push({nomeInflu:nome,regiao,plataforma:plat,link,collab,data:hoje()});
+  conteudos.push({nomeInflu:nome,regiao,plataforma:plat,link,collab,data:hoje(),lojasCollab:lojasMarcadas});
   if(collab&&inf){const idx=influ.indexOf(inf);if(idx>=0){influ[idx].collab=collab;}}
   saveAll();
-  // Grava na planilha
-  writeToSheetAPI('Conteudos', [nome, regiao.toUpperCase(), plat, link, collab, hoje(), '']);
+  // Grava no banco (lojas_collab vai como array)
+  writeToSheetAPI('Conteudos', [nome, regiao.toUpperCase(), plat, link, collab, hoje(), '', lojasMarcadas]);
   // Notifica admin via WhatsApp do novo post
-  notificarAdminWpp('conteudo', {nomeInflu:nome, lojaId:'', data:hoje(), endereco:'Plataforma: '+plat+' · '+(collab||'collab não informada')+' · Link: '+link}, 'Novo conteúdo postado pela influenciadora');
+  const lojasNomes = lojasMarcadas.map(id=>{const lo=getLoja(id);return lo?lo.n:id;});
+  const obsAdmin = 'Plataforma: '+plat+' · '+(collab||'collab não informada')+(lojasNomes.length?' · Lojas em collab: '+lojasNomes.join(', '):'')+' · Link: '+link;
+  notificarAdminWpp('conteudo', {nomeInflu:nome, lojaId:'', data:hoje(), endereco:obsAdmin}, 'Novo conteúdo postado pela influenciadora');
+  // Se solicitou collab em apenas UMA loja, abre WhatsApp pra ela pedindo aceite
+  let mensagemExtra = '';
+  if(lojasMarcadas.length === 1){
+    const loja = getLoja(lojasMarcadas[0]);
+    if(loja && loja.w){
+      const wppLoja = loja.w.replace(/\D/g,'');
+      if(wppLoja){
+        const msgCollab = `Olá! 🍣\n\nA influenciadora *${nome}*${inf?.insta?' ('+inf.insta+')':''} acabou de publicar um conteúdo no ${plat} marcando a *${loja.n}* — e está solicitando que vocês aceitem a *collab* no post.\n\n🔗 Link do post: ${link}\n\nPedimos por gentileza que abram a notificação do ${plat} e *aceitem a collab*, assim o post fica visível também no perfil da loja e amplifica o alcance.\n\nQualquer dúvida, falar com a equipe de marketing. Obrigada! 🙏\n\n*S.A. Casa do Sushi*`;
+        const a = document.createElement('a');
+        a.href = 'https://wa.me/55'+wppLoja+'?text='+encodeURIComponent(msgCollab);
+        a.target = '_blank'; a.rel = 'noopener';
+        document.body.appendChild(a); a.click();
+        setTimeout(()=>document.body.removeChild(a), 500);
+        mensagemExtra = ` · Abrimos WhatsApp da ${loja.n} pedindo aceite`;
+      }
+    }
+  } else if(lojasMarcadas.length > 1){
+    mensagemExtra = ` · Marcadas ${lojasMarcadas.length} lojas`;
+  }
   document.getElementById('cont-link').value='';
   document.getElementById('cont-nome').value='';
   document.getElementById('cont-collab').value='';
+  document.querySelectorAll('.cont-loja-cb').forEach(cb=>cb.checked=false);
+  atualizarLojasCollab();
   renderConteudos();
   renderInflu();
-  const msg=collab==='Aceita'?'📸 Link registrado! Collab aceita ✅':collab==='Não aceita'?'📸 Link registrado. Collab não aceita ❌':'📸 Link registrado com sucesso!';
-  showN(msg);
+  const msgBase = collab==='Aceita'?'📸 Link registrado! Collab aceita ✅':collab==='Não aceita'?'📸 Link registrado. Collab não aceita ❌':'📸 Link registrado!';
+  showN(msgBase + mensagemExtra);
 }
 
 let filtroContAtual='todos';
