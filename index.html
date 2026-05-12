@@ -1662,24 +1662,25 @@ function notificarAdminWpp(tipo, ag, observacao){
   if(!wpp) return; // sem admin configurado, não notifica
   const loja = ag && ag.lojaId ? getLoja(ag.lojaId) : null;
   const inf = ag ? getInflu(ag.nomeInflu) : null;
-  let icon = '📋', titulo = 'AGENDAMENTO';
-  if(tipo==='confirmado'){ icon='✅'; titulo='RECEBIMENTO CONFIRMADO'; }
-  else if(tipo==='cancelado'){ icon='❌'; titulo='AGENDAMENTO CANCELADO'; }
-  else if(tipo==='novo'){ icon='🍣'; titulo='NOVO AGENDAMENTO'; }
-  else if(tipo==='conteudo'){ icon='📸'; titulo='POST REGISTRADO'; }
-  else if(tipo==='influ-nova'){ icon='👤'; titulo='NOVA INFLUENCIADORA'; }
+  // Usa apenas emojis básicos universais (✅ ❌ ⭐ ⚠️) — outros podem não renderizar em alguns Androids
+  let titulo = '[AGENDAMENTO]';
+  if(tipo==='confirmado')     titulo = '✅ [RECEBIMENTO CONFIRMADO]';
+  else if(tipo==='cancelado') titulo = '❌ [AGENDAMENTO CANCELADO]';
+  else if(tipo==='novo')      titulo = '⭐ [NOVO AGENDAMENTO]';
+  else if(tipo==='conteudo')  titulo = '⭐ [POST REGISTRADO]';
+  else if(tipo==='influ-nova')titulo = '⭐ [NOVA INFLUENCIADORA]';
   const linhas = [
-    `${icon} *${titulo}* — S.A. Casa do Sushi`,
+    `*${titulo}* - S.A. Casa do Sushi`,
     '',
-    `👤 Influenciadora: *${ag.nomeInflu||'?'}*${inf?.insta?' ('+inf.insta+')':''}`,
-    `🏪 Loja: *${loja?loja.n:(ag.lojaId||'?')}*`,
-    `📅 Data do pedido: ${ag.data?formatData(ag.data):'?'}${ag.hora?' às '+ag.hora:''}`,
-    ag.endereco?`📍 Endereço: ${ag.endereco}`:'',
-    inf?.cupom?`🎟️ Cupom: ${inf.cupom}`:'',
-    ag.dataBloqueioFim?`🔒 Bloqueada até: ${formatData(ag.dataBloqueioFim)}`:'',
-    observacao?`📝 ${observacao}`:'',
+    `*Influenciadora:* ${ag.nomeInflu||'-'}${inf?.insta?' ('+inf.insta+')':''}`,
+    `*Loja:* ${loja?loja.n:(ag.lojaId||'-')}`,
+    `*Data do pedido:* ${ag.data?formatData(ag.data):'-'}${ag.hora?' as '+ag.hora:''}`,
+    ag.endereco?`*Endereco:* ${ag.endereco}`:'',
+    inf?.cupom?`*Cupom:* ${inf.cupom}`:'',
+    ag.dataBloqueioFim?`*Bloqueada ate:* ${formatData(ag.dataBloqueioFim)}`:'',
+    observacao?`*Obs:* ${observacao}`:'',
     '',
-    `🕐 Registrado em: ${new Date().toLocaleString('pt-BR')}`,
+    `_Registrado em: ${new Date().toLocaleString('pt-BR')}_`,
   ].filter(Boolean);
   const msg = linhas.join('\n');
   const a = document.createElement('a');
