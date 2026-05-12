@@ -1372,7 +1372,7 @@ function abrirPerfil(nome){
 let cidadeSel='cwb', lojaSel=null;
 
 function getRegioesSalvas(){
-  const base = { cwb: 'Curitiba & Região', fln: 'Florianópolis / SC' };
+  const base = { cwb: 'Curitiba & Região', fln: 'Floripa & Região' };
   const salvas = JSON.parse(localStorage.getItem('sushi_regioes')||'{}');
   return { ...base, ...salvas };
 }
@@ -2184,8 +2184,8 @@ const LOJAS_REDE = [
   {id:'itapema', n:'Itapema', r:'sc', ig:'@sacasadosushiitapema', end:'Av. Nereu Ramos, 2880 - Meia Praia, Itapema - SC, 88220-971', w:'(47) 99945-8585', l:'https://link.vocepede.online/sa-itapema'},
   {id:'navegantes', n:'Navegantes', r:'sc', ig:'@sacasadosushinavegantes', end:'R. Gracilides Coelho Reiser, 228 - São Domingos, Navegantes - SC, 88370-552', w:'(47) 99724-8138', l:'https://delivery.livn.com.br/sacasadosushinavegantes'},
   {id:'saofrancisco', n:'São Francisco do Sul', r:'sc', ig:'@sacasadosushisaofranciscodosul', end:'R. Barão do Rio Branco, 575 - Villa Park, São Francisco do Sul - SC, 89240-000', w:'(47) 98890-6469', l:'https://delivery.livn.com.br/sacasadosushisaofrancisco'},
-  {id:'florianopolis', n:'Florianópolis', r:'sc', ig:'@sayakinikufloripa', end:'Av. Pref. Acácio Garibaldi São Thiago, 141 - Lagoa da Conceição, Florianópolis - SC, 88062-600', w:'(48) 99180-716', l:''},
-  {id:'saojosesc', n:'São José - SC', r:'sc', ig:'@sacasadosushisaojosesc', end:'Av. Salvador di Bernardi, 914 - Campinas, São José - SC, 88101-260', w:'(48) 98808-6457', l:'https://delivery.livn.com.br/sacasadosushisaojose'},
+  {id:'florianopolis', n:'Florianópolis', r:'fln', ig:'@sayakinikufloripa', end:'Av. Pref. Acácio Garibaldi São Thiago, 141 - Lagoa da Conceição, Florianópolis - SC, 88062-600', w:'(48) 99180-716', l:''},
+  {id:'saojosesc', n:'São José - SC', r:'fln', ig:'@sacasadosushisaojosesc', end:'Av. Salvador di Bernardi, 914 - Campinas, São José - SC, 88101-260', w:'(48) 98808-6457', l:'https://delivery.livn.com.br/sacasadosushisaojose'},
   {id:'jaraguasul', n:'Jaraguá do Sul', r:'sc', ig:'@sacasadosushijaraguadosul', end:'Av. Mal. Deodoro da Fonseca, 1384 - Centro, Jaraguá do Sul - SC, 89251-700', w:'(47) 3084-7370', l:'https://link.vocepede.online/sa_jgs'},
   // SP (São Paulo)
   {id:'itapolis', n:'Itápolis', r:'sp', ig:'@sacasadosushiitapolisdelivery', end:'Av. Sete de Setembro, 37 - Centro, Itápolis - SP, 14900-000', w:'(16) 99308-9570', l:'https://delivery.livn.com.br/sa-itapolis'},
@@ -2204,7 +2204,8 @@ const LOJAS_REDE = [
   {id:'erechim', n:'Erechim', r:'rs', ig:'@sayakinikuerechim', end:'Av. Tiradentes, 509 - Centro, Erechim - RS, 99700-000', w:'(54) 99164-6404', l:'https://delivery.livn.com.br/saerechim'},
 ];
 const REGIOES_REDE = {
-  cwb:'Curitiba & Região', pr:'Paraná (interior)', sc:'Santa Catarina',
+  cwb:'Curitiba & Região', pr:'Paraná (interior)',
+  fln:'Floripa & Região', sc:'Santa Catarina',
   sp:'São Paulo', mt:'Mato Grosso', go:'Goiás', rs:'Rio Grande do Sul',
 };
 
