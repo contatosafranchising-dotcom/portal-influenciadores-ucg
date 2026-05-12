@@ -587,8 +587,9 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
           <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Loja</th>
           <th style="text-align:right;padding:10px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Desconto</th>
           <th style="text-align:right;padding:10px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--bdr)">Líquido</th>
+          <th style="text-align:right;padding:10px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--rl);border-bottom:1px solid var(--bdr)">Comissão 7%</th>
         </tr></thead>
-        <tbody id="cup-tbody"><tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">Carregando...</td></tr></tbody>
+        <tbody id="cup-tbody"><tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted)">Carregando...</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -2123,17 +2124,20 @@ function renderCupons(){
     return true;
   });
 
-  // Stats
+  // Stats (comissão = 7% do líquido)
+  const TAXA_COMISSAO = 0.07;
   const totalVendas = lista.length;
   const desconto = lista.reduce((s,c)=>s+parseFloat(c.desconto||0),0);
   const liquido = lista.reduce((s,c)=>s+parseFloat(c.total_liquido||0),0);
+  const comissao = liquido * TAXA_COMISSAO;
   const tm = totalVendas ? liquido/totalVendas : 0;
   const influAtivas = new Set(lista.filter(c=>c.influenciadora).map(c=>c.influenciadora)).size;
   const stats = [
     {label:'Vendas com cupom', val: totalVendas, color:'var(--gold)'},
-    {label:'Desconto total', val: 'R$ '+desconto.toFixed(2).replace('.',','), color:'var(--orange)'},
     {label:'Líquido total', val: 'R$ '+liquido.toFixed(2).replace('.',','), color:'var(--green)'},
-    {label:'Ticket médio', val: 'R$ '+tm.toFixed(2).replace('.',','), color:'var(--rl)'},
+    {label:'Comissão 7% total', val: 'R$ '+comissao.toFixed(2).replace('.',','), color:'var(--rl)'},
+    {label:'Desconto total', val: 'R$ '+desconto.toFixed(2).replace('.',','), color:'var(--orange)'},
+    {label:'Ticket médio', val: 'R$ '+tm.toFixed(2).replace('.',','), color:'var(--gold)'},
     {label:'Influ ativas', val: influAtivas, color:'var(--gold)'},
   ];
   const elS = document.getElementById('cup-stats');
@@ -2143,15 +2147,17 @@ function renderCupons(){
       <div style="font-size:18px;font-weight:700;color:${s.color}">${s.val}</div>
     </div>`).join('');
 
-  // Ranking de influenciadoras
+  // Ranking de influenciadoras com comissão
   const porInflu = {};
   lista.forEach(c=>{
-    const n = c.influenciadora || '(cupom genérico)';
+    const n = c.influenciadora;
+    if(!n) return; // ignora vendas sem influenciadora vinculada
     if(!porInflu[n]) porInflu[n] = {nome:n, vendas:0, desconto:0, liquido:0};
     porInflu[n].vendas++;
     porInflu[n].desconto += parseFloat(c.desconto||0);
     porInflu[n].liquido += parseFloat(c.total_liquido||0);
   });
+  Object.values(porInflu).forEach(r => r.comissao = r.liquido * TAXA_COMISSAO);
   const ranking = Object.values(porInflu).sort((a,b)=>b.liquido-a.liquido);
   const maxLiq = ranking[0]?.liquido || 1;
   const medals = ['🥇','🥈','🥉'];
@@ -2162,35 +2168,42 @@ function renderCupons(){
       const medal = medals[i]||`#${i+1}`;
       const inf = getInflu(r.nome);
       const regiao = inf?.regiao;
-      return `<div style="margin-bottom:14px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;flex-wrap:wrap">
+      const cupom = inf?.cupom;
+      return `<div style="margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--bdr)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap">
           <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1">
             <span style="font-size:18px">${medal}</span>
-            <div style="font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.nome}</div>
-            ${regiao?`<span class="rb ${regiaoClass(regiao)}" style="font-size:9px">${regiaoLabel(regiao)}</span>`:''}
+            <div>
+              <div style="font-weight:700;font-size:14px;line-height:1.2">${r.nome}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">
+                ${regiao?`<span class="rb ${regiaoClass(regiao)}" style="font-size:9px">${regiaoLabel(regiao)}</span> `:''}
+                ${cupom?`<span style="color:var(--gold)">${cupom}</span>`:''}
+              </div>
+            </div>
           </div>
-          <div style="display:flex;gap:14px;font-size:12px;flex-shrink:0">
-            <span style="color:var(--muted)">${r.vendas} ${r.vendas===1?'venda':'vendas'}</span>
-            <span style="color:var(--orange)">- R$ ${r.desconto.toFixed(2).replace('.',',')}</span>
-            <span style="color:var(--green);font-weight:700">R$ ${r.liquido.toFixed(2).replace('.',',')}</span>
+          <div style="display:flex;gap:12px;font-size:12px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
+            <div style="text-align:right"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Vendas</div><div style="font-weight:700">${r.vendas}</div></div>
+            <div style="text-align:right"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Líquido</div><div style="color:var(--green);font-weight:700">R$ ${r.liquido.toFixed(2).replace('.',',')}</div></div>
+            <div style="text-align:right"><div style="font-size:10px;color:var(--rl);text-transform:uppercase;letter-spacing:1px">Comissão 7%</div><div style="color:var(--rl);font-weight:700">R$ ${r.comissao.toFixed(2).replace('.',',')}</div></div>
           </div>
         </div>
         <div style="height:6px;background:var(--s3);border-radius:3px;overflow:hidden">
           <div style="height:100%;width:${pct}%;background:${i===0?'var(--gold)':i===1?'rgba(255,255,255,.4)':i===2?'var(--red)':'rgba(232,184,109,.35)'};transition:width .4s ease"></div>
         </div>
       </div>`;
-    }).join('') : '<div style="color:var(--muted);font-size:13px;text-align:center;padding:30px">Nenhuma venda no filtro selecionado.</div>';
+    }).join('') : '<div style="color:var(--muted);font-size:13px;text-align:center;padding:30px">Nenhuma venda com cupom vinculado no filtro.</div>';
   }
 
   // Tabela
   const tbody = document.getElementById('cup-tbody');
   if(!tbody) return;
   if(!lista.length){
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">Nenhuma venda neste filtro.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted)">Nenhuma venda neste filtro.</td></tr>';
     return;
   }
   tbody.innerHTML = lista.map(c=>{
     const loja = getLoja(c.loja_id);
+    const com = parseFloat(c.total_liquido||0) * TAXA_COMISSAO;
     return `<tr>
       <td style="padding:9px 12px;border-bottom:1px solid var(--bdr);font-size:12px">${c.data_venda?formatData(c.data_venda):'—'}</td>
       <td style="padding:9px 12px;border-bottom:1px solid var(--bdr);font-size:12px">${c.cliente||'—'}</td>
@@ -2199,6 +2212,7 @@ function renderCupons(){
       <td style="padding:9px 12px;border-bottom:1px solid var(--bdr);font-size:12px">${loja?loja.n:(c.loja_nome||c.loja_id||'—')}</td>
       <td style="padding:9px 12px;border-bottom:1px solid var(--bdr);text-align:right;color:var(--orange);font-size:12px">R$ ${parseFloat(c.desconto||0).toFixed(2).replace('.',',')}</td>
       <td style="padding:9px 12px;border-bottom:1px solid var(--bdr);text-align:right;font-weight:700;color:var(--green)">R$ ${parseFloat(c.total_liquido||0).toFixed(2).replace('.',',')}</td>
+      <td style="padding:9px 12px;border-bottom:1px solid var(--bdr);text-align:right;color:var(--rl);font-weight:700">R$ ${com.toFixed(2).replace('.',',')}</td>
     </tr>`;
   }).join('');
 }
@@ -2222,10 +2236,11 @@ function exportarCuponsCSV(){
     return true;
   });
   if(!lista.length){showN('⚠️ Nada pra exportar');return;}
-  const head = ['Data','Cliente','Cupom','Influenciadora','Loja','Região','Semana','Desconto','Líquido'];
+  const head = ['Data','Cliente','Cupom','Influenciadora','Loja','Região','Semana','Desconto','Líquido','Comissão 7%'];
   const linhas = [head, ...lista.map(c=>{
     const lo = getLoja(c.loja_id);
-    return [c.data_venda||'', c.cliente||'', c.cupom||'', c.influenciadora||'', lo?lo.n:c.loja_nome||c.loja_id, lo?String(lo.r||'').toUpperCase():'', c.semana||'', parseFloat(c.desconto||0).toFixed(2), parseFloat(c.total_liquido||0).toFixed(2)];
+    const liq = parseFloat(c.total_liquido||0);
+    return [c.data_venda||'', c.cliente||'', c.cupom||'', c.influenciadora||'', lo?lo.n:c.loja_nome||c.loja_id, lo?String(lo.r||'').toUpperCase():'', c.semana||'', parseFloat(c.desconto||0).toFixed(2), liq.toFixed(2), (liq*0.07).toFixed(2)];
   })];
   const csv = linhas.map(l=>l.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
@@ -2253,6 +2268,7 @@ async function processarImportCupons(){
   const re = /^\s*(\d+)\s+(\d{2}\/\d{2}\/\d{4})\s+(.+?)\s+([A-Z0-9_-]{3,})\s+R\$\s*([\d.,]+)\s+R\$\s*([\d.,]+)\s*$/i;
   const linhas = txt.split('\n');
   const vendas = [];
+  const ignoradas = [];
   for(const l of linhas){
     const m = l.match(re);
     if(!m) continue;
@@ -2260,8 +2276,9 @@ async function processarImportCupons(){
     const [d, mes, ano] = dataBR.split('/');
     const dataISO = `${ano}-${mes}-${d}`;
     const cupomUp = cupom.toUpperCase().trim();
-    // Mapeia influenciadora pelo cupom
+    // SÓ aceita cupons que estejam vinculados a uma influenciadora cadastrada
     const infMatch = influ.find(i => String(i.cupom||'').toUpperCase().trim() === cupomUp);
+    if(!infMatch){ ignoradas.push(cupomUp); continue; }
     vendas.push({
       loja_id: lojaId,
       loja_nome: loja?loja.n:'',
@@ -2271,11 +2288,16 @@ async function processarImportCupons(){
       desconto: parseFloat(desc.replace('.','').replace(',','.'))||0,
       total_liquido: parseFloat(liq.replace('.','').replace(',','.'))||0,
       semana: isoSemana(dataISO),
-      influenciadora: infMatch ? infMatch.nome : '',
+      influenciadora: infMatch.nome,
     });
   }
-  if(!vendas.length){showN('⚠️ Nenhuma linha válida encontrada. Verifique o formato.');return;}
-  showN(`💾 Importando ${vendas.length} vendas...`);
+  if(!vendas.length){
+    if(ignoradas.length) showN(`⚠️ ${ignoradas.length} linha(s) ignorada(s): cupons genéricos (${[...new Set(ignoradas)].join(', ')})`);
+    else showN('⚠️ Nenhuma linha válida encontrada. Verifique o formato.');
+    return;
+  }
+  const obsIgnoradas = ignoradas.length ? ` · ${ignoradas.length} ignorada(s): ${[...new Set(ignoradas)].join(', ')}` : '';
+  showN(`💾 Importando ${vendas.length} vendas${obsIgnoradas}...`);
   // Upsert no Supabase (em batch)
   const r = await sbFetch('vendas_cupom?on_conflict=loja_id,data_venda,cliente,cupom,total_liquido', {
     method:'POST',
