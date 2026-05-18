@@ -1780,11 +1780,21 @@ function updAg(){
       bb.style.display='flex';
       document.getElementById('bloqueio-msg').textContent=`${nome} está bloqueada até ${formatData(bloq)}. O próximo pedido só pode ser realizado após 15 dias do último pedido confirmado.`;
       document.getElementById('btn-confirmar-ag').style.display='none';
-      
+
       document.getElementById('wpp-preview-wrap').style.display='none';
       return;
     } else {
       bb.style.display='none';
+    }
+    // Check pedido em aberto (pendente/agendado)
+    const ativo = agendamentos.find(a => a.nomeInflu===nome && (a.status==='pendente'||a.status==='agendado'));
+    if(ativo){
+      const lo = getLoja(ativo.lojaId);
+      bb.style.display='flex';
+      document.getElementById('bloqueio-msg').textContent = `${nome} já tem um pedido em aberto em ${lo?lo.n:ativo.lojaId} (${(ativo.data||'').split('-').reverse().join('/')}). Só é possível um pedido por vez — cancele o atual antes de criar outro.`;
+      document.getElementById('btn-confirmar-ag').style.display='none';
+      document.getElementById('wpp-preview-wrap').style.display='none';
+      return;
     }
   }
 
@@ -1808,6 +1818,18 @@ function confirmarAgendamento(){
   const hora=document.getElementById('ag-hora').value||'19:00';
   const end=document.getElementById('ag-end').value;
   if(!nome||!data||!lojaSel){showN('⚠️ Preencha todos os campos!');return;}
+
+  // Bloqueia se já existe um pedido ativo (pendente/agendado/confirmado sem cancelamento)
+  const ativos = agendamentos.filter(a =>
+    a.nomeInflu === nome &&
+    (a.status === 'pendente' || a.status === 'agendado')
+  );
+  if(ativos.length){
+    const at = ativos[0];
+    const lo = getLoja(at.lojaId);
+    alert(`⚠️ ${nome} já tem um pedido em aberto:\n\n🏪 ${lo?lo.n:at.lojaId}\n📅 ${(at.data||'').split('-').reverse().join('/')} às ${at.hora||'—'}\n\nCancele o agendamento atual antes de criar outro (aba "Influenciadoras" → seu card → ✕ Cancelar).`);
+    return;
+  }
 
   const id='ag_'+Date.now();
   const loja = getLoja(lojaSel);
@@ -1972,26 +1994,43 @@ function confirmarRecebimento(id){
   ag.status='confirmado';
   ag.dataBloqueioFim=fim.toISOString().split('T')[0];
   saveAll();
-  // Tenta gravar na planilha (silencioso se falhar)
-  writeToSheetAPI('Agendamentos', [ag.id+'_CONF', ag.nomeInflu, ag.lojaId, ag.data, ag.hora, ag.endereco, 'Confirmado', ag.dataBloqueioFim, new Date().toISOString(), 'Confirmado pela loja']);
-  // SEMPRE notifica o admin via WhatsApp (centraliza o histórico mesmo com API quebrada)
+  // Atualiza o registro original no Supabase (status=confirmado + data_bloqueio_fim)
+  sbFetch('agendamentos?id=eq.'+encodeURIComponent(ag.id), {
+    method:'PATCH',
+    headers:{'Prefer':'return=minimal'},
+    body: JSON.stringify({status:'confirmado', data_bloqueio_fim: ag.dataBloqueioFim, observacoes:'Confirmado pela loja'})
+  });
   notificarAdminWpp('confirmado', ag, 'Influenciadora bloqueada por 15 dias para próximo pedido');
   showN(`✅ Recebimento confirmado! ${ag.nomeInflu} bloqueada por 15 dias.`);
   renderPendentes();
   renderInflu();
 }
 
-function cancelarAgendamento(id){
+async function cancelarAgendamento(id){
   const ag = agendamentos.find(a=>a.id===id);
-  agendamentos=agendamentos.filter(a=>a.id!==id);
-  saveAll();
-  if(ag){
-    writeToSheetAPI('Agendamentos',[ag.id+'_CANC',ag.nomeInflu,ag.lojaId,ag.data,ag.hora,ag.endereco,'Cancelado','',new Date().toISOString(),'Cancelado pelo usuário']);
-    notificarAdminWpp('cancelado', ag, 'Agendamento cancelado pela influenciadora');
+  if(!ag){ showN('⚠️ Agendamento não encontrado'); return; }
+  if(!confirm(`Cancelar o agendamento de ${ag.nomeInflu}?`)) return;
+  // Atualiza o registro original no Supabase pra status=cancelado
+  // (assim o registro fica no histórico mas some das listas de pendentes)
+  showN('🗑 Cancelando...');
+  const ok = await sbFetch('agendamentos?id=eq.'+encodeURIComponent(ag.id), {
+    method:'PATCH',
+    headers:{'Prefer':'return=minimal'},
+    body: JSON.stringify({status:'cancelado', observacoes:'Cancelado pela influenciadora'})
+  });
+  if(ok === null){
+    showN('⚠️ Falha ao cancelar no banco. Tente de novo.');
+    return;
   }
+  // Atualiza estado local depois do sucesso na rede
+  ag.status = 'cancelado';
+  agendamentos = agendamentos.filter(a => a.id !== id || a.status === 'cancelado');
+  saveAll();
+  notificarAdminWpp('cancelado', ag, 'Agendamento cancelado pela influenciadora');
   renderPendentes();
   renderInflu();
-  showN('🗑 Agendamento cancelado.');
+  renderAdmin && renderAdmin();
+  showN('✅ Agendamento cancelado.');
 }
 
 // ========== PÁGINA: CONTEÚDOS ==========
