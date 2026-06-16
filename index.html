@@ -285,12 +285,16 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
         <div id="ag-influ-aviso" style="display:none;font-size:11px;color:#ffa500;margin-top:6px"></div>
       </div>
       <div class="fi">
-        <label>Data do pedido</label>
+        <label>Data do pedido (mín. 1 dia de antecedência)</label>
         <input type="date" id="ag-data" onchange="updAg()">
       </div>
       <div class="fi">
-        <label>Horário desejado</label>
-        <input type="time" id="ag-hora" value="19:00" onchange="updAg()">
+        <label>Horário de entrega</label>
+        <select id="ag-hora" onchange="updAg()">
+          <option value="17:30">17h30</option>
+          <option value="18:00">18h00</option>
+          <option value="19:00" selected>19h00</option>
+        </select>
       </div>
       <div class="fi form-full">
         <label>Endereço de entrega</label>
@@ -465,6 +469,10 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
         <div class="fi form-full">
           <label>Premiação</label>
           <input type="text" id="camp-premiacao" placeholder="Ex: R$ 80,00 PIX">
+        </div>
+        <div class="fi form-full">
+          <label>🍣 Combinado da quinzena (aparece em NEGRITO/CAIXA ALTA na mensagem da loja)</label>
+          <input type="text" id="camp-combinado" placeholder="Ex: Combinado 20 peças + temaki salmão">
         </div>
         <div class="fi form-full">
           <label>Descrição da ação</label>
@@ -1726,6 +1734,7 @@ function selecionarLoja(id){
   document.getElementById('loja-card-'+id).classList.add('selected');
   const l=getLoja(id);
   document.getElementById('ag-form-title').textContent=`📋 Agendamento — ${l.n}`;
+  document.getElementById('ag-data').min = dataMinimaAgendamento();
   document.getElementById('ag-form').style.display='block';
   document.getElementById('ag-form').scrollIntoView({behavior:'smooth',block:'start'});
   // Filtra influenciadoras pela região da loja selecionada
@@ -1766,6 +1775,32 @@ function populateInfluSelect(selId, filtroRegiao){
   }
 }
 
+// Horários de entrega permitidos
+const HORARIOS_ENTREGA = ['17:30','18:00','19:00'];
+
+// Data (YYYY-MM-DD) precisa ser >= amanhã (mín. 1 dia de antecedência)
+function dataComAntecedencia(data){
+  if(!data) return false;
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const minimo = new Date(hoje); minimo.setDate(minimo.getDate()+1);
+  const sel = new Date(data+'T00:00:00');
+  return sel >= minimo;
+}
+
+// Data mínima (amanhã) no formato do input date
+function dataMinimaAgendamento(){
+  const d = new Date(); d.setDate(d.getDate()+1);
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
+// Linha do combinado da quinzena (negrito + caixa alta) p/ mensagem da loja
+function linhaCombinado(){
+  const c = (_campanhaAtual && _campanhaAtual.combinado || '').trim();
+  return c ? `\n\n🍣 *PEDIDO COMBINADO: ${c.toUpperCase()}*` : '';
+}
+
 function updAg(){
   const nome=document.getElementById('ag-influencer').value;
   const data=document.getElementById('ag-data').value;
@@ -1801,12 +1836,20 @@ function updAg(){
   if(!lojaSel||!data||!nome){
     document.getElementById('wpp-preview-wrap').style.display='none';
     document.getElementById('btn-confirmar-ag').style.display='none';
-    
+
+    return;
+  }
+  // Mínimo 1 dia de antecedência
+  if(!dataComAntecedencia(data)){
+    bb.style.display='flex';
+    document.getElementById('bloqueio-msg').textContent='O pedido precisa ser agendado com pelo menos 1 dia de antecedência. Escolha uma data a partir de amanhã.';
+    document.getElementById('btn-confirmar-ag').style.display='none';
+    document.getElementById('wpp-preview-wrap').style.display='none';
     return;
   }
   const l=getLoja(lojaSel);
   const df=formatData(data);
-  const msg=`Olá! Tudo bem? 🍣\n\nPassando para avisar com antecedência que a influenciadora *${nome}* (${getInflu(nome)?.insta||''}) irá realizar um pedido na loja *${l.n}* no dia *${df}* às *${hora}*.\n\n📍 Endereço de entrega: ${end}\n\nEla participa da campanha de UGC da S.A. Casa do Sushi e irá produzir conteúdo sobre a experiência. Pedimos atenção especial! 🙏\n\n*Equipe de Marketing — S.A. Casa do Sushi*`;
+  const msg=`Olá! Tudo bem? 🍣\n\nPassando para avisar com antecedência que a influenciadora *${nome}* (${getInflu(nome)?.insta||''}) irá realizar um pedido na loja *${l.n}* no dia *${df}* às *${hora}*.${linhaCombinado()}\n\n📍 Endereço de entrega: ${end}\n\nEla participa da campanha de UGC da S.A. Casa do Sushi e irá produzir conteúdo sobre a experiência. Pedimos atenção especial! 🙏\n\n*Equipe de Marketing — S.A. Casa do Sushi*`;
   document.getElementById('wpp-preview-txt').textContent=msg;
   document.getElementById('wpp-preview-wrap').style.display='block';
   document.getElementById('btn-confirmar-ag').style.display='inline-flex';
@@ -1818,6 +1861,8 @@ function confirmarAgendamento(){
   const hora=document.getElementById('ag-hora').value||'19:00';
   const end=document.getElementById('ag-end').value;
   if(!nome||!data||!lojaSel){showN('⚠️ Preencha todos os campos!');return;}
+  if(!dataComAntecedencia(data)){showN('⚠️ Agende com pelo menos 1 dia de antecedência.');return;}
+  if(!HORARIOS_ENTREGA.includes(hora)){showN('⚠️ Horário de entrega permitido: 17h30, 18h00 ou 19h00.');return;}
 
   // Bloqueia se já existe um pedido ativo (pendente/agendado/confirmado sem cancelamento)
   const ativos = agendamentos.filter(a =>
@@ -1837,7 +1882,7 @@ function confirmarAgendamento(){
   const instaHandle = inf ? inf.insta : '';
   const lojaWpp = loja ? loja.w.replace(/\D/g,'') : '';
   const dataFmt = data.split('-').reverse().join('/');
-  const msg = `Olá! Tudo bem? 🍣\n\nPassando para avisar com antecedência que a influenciadora *${nome}*${instaHandle?' ('+instaHandle+')':''} irá realizar um pedido na loja *${loja?loja.n:lojaSel}* no dia *${dataFmt}* às *${hora}*.\n\n📍 Endereço de entrega: ${end||'a informar'}\n\nEla participa da campanha de UGC da S.A. Casa do Sushi e irá produzir conteúdo sobre a experiência. Pedimos atenção especial! 🙏`;
+  const msg = `Olá! Tudo bem? 🍣\n\nPassando para avisar com antecedência que a influenciadora *${nome}*${instaHandle?' ('+instaHandle+')':''} irá realizar um pedido na loja *${loja?loja.n:lojaSel}* no dia *${dataFmt}* às *${hora}*.${linhaCombinado()}\n\n📍 Endereço de entrega: ${end||'a informar'}\n\nEla participa da campanha de UGC da S.A. Casa do Sushi e irá produzir conteúdo sobre a experiência. Pedimos atenção especial! 🙏`;
 
   // Abre WhatsApp via link (não é bloqueado pelo navegador móvel)
   if(lojaWpp){
@@ -3450,6 +3495,7 @@ function abrirCampanhaModal(){
       ${c.prazo?`<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r3);padding:10px"><div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;font-weight:700">⏰ PRAZO</div><div style="font-weight:700;font-size:13px;margin-top:3px">${c.prazo}</div></div>`:''}
       ${c.premiacao?`<div style="background:var(--s2);border:1px solid rgba(232,184,109,.3);border-radius:var(--r3);padding:10px"><div style="font-size:9px;color:var(--gold);letter-spacing:1.5px;font-weight:700">🏆 PREMIAÇÃO</div><div style="font-weight:700;font-size:13px;margin-top:3px;color:var(--gold)">${c.premiacao}</div></div>`:''}
     </div>
+    ${c.combinado?`<div style="background:rgba(232,184,109,.12);border:1px solid rgba(232,184,109,.4);border-radius:var(--r3);padding:12px 14px;margin-bottom:16px"><div style="font-size:10px;color:var(--gold);letter-spacing:1.5px;font-weight:700;margin-bottom:4px">🍣 COMBINADO DA QUINZENA — É ISSO QUE VOCÊ AGENDA COM A LOJA</div><div style="font-weight:700;font-size:15px;text-transform:uppercase">${c.combinado}</div></div>`:''}
     ${c.descricao?`<div style="background:var(--s1);border-left:3px solid var(--rl);padding:12px 14px;border-radius:0 var(--r3) var(--r3) 0;margin-bottom:16px;font-size:13px;line-height:1.5">${c.descricao}</div>`:''}
     ${ideias.length?`<div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:8px">💡 IDEIAS DE CONTEÚDO</div>
       <ul style="margin:0 0 16px;padding-left:18px;font-size:13px;line-height:1.6">${ideias.map(i=>`<li style="margin-bottom:4px">${i}</li>`).join('')}</ul>`:''}
@@ -3469,6 +3515,7 @@ function preencherFormCampanha(){
   set('camp-periodo', c.periodo||'');
   set('camp-prazo', c.prazo||'');
   set('camp-premiacao', c.premiacao||'');
+  set('camp-combinado', c.combinado||'');
   set('camp-descricao', c.descricao||'');
   set('camp-ideias', c.ideias||'');
   set('camp-regras', c.regras||'');
@@ -3491,6 +3538,7 @@ async function salvarCampanha(){
     periodo: get('camp-periodo'),
     prazo: get('camp-prazo'),
     premiacao: get('camp-premiacao'),
+    combinado: get('camp-combinado'),
     descricao: get('camp-descricao'),
     ideias: get('camp-ideias'),
     regras: get('camp-regras'),
