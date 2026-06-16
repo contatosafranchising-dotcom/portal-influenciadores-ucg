@@ -336,6 +336,12 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
         </select>
       </div>
       <div class="fi form-full">
+        <label>🎯 De qual campanha é esta postagem?</label>
+        <select id="cont-campanha">
+          <option value="">Selecione a campanha...</option>
+        </select>
+      </div>
+      <div class="fi form-full">
         <label>Link da postagem</label>
         <input type="url" id="cont-link" placeholder="https://instagram.com/p/... ou https://tiktok.com/...">
       </div>
@@ -359,9 +365,12 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
     </div>
   </div>
 
-  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
     <button class="btn btn-ghost btn-sm" onclick="filtrarConteudos('todos',this)" style="border-color:var(--rl);color:var(--rl)">Todos</button>
     <span id="filtros-estados-cont"></span>
+    <select id="cont-filtro-campanha" onchange="renderConteudos()" style="margin-left:auto;background:var(--s2);border:1px solid var(--bdr2);border-radius:var(--r4);color:var(--txt);font-family:'Sora',sans-serif;font-size:12px;font-weight:600;padding:7px 11px">
+      <option value="">🎯 Todas as campanhas</option>
+    </select>
   </div>
 
   <div class="cont-grid" id="cont-grid"></div>
@@ -473,6 +482,20 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
         <div class="fi form-full">
           <label>🍣 Combinado da quinzena (aparece em NEGRITO/CAIXA ALTA na mensagem da loja)</label>
           <input type="text" id="camp-combinado" placeholder="Ex: Combinado 20 peças + temaki salmão">
+        </div>
+        <div class="fi form-full" style="background:rgba(232,184,109,.07);border:1px dashed rgba(232,184,109,.4);border-radius:var(--r3);padding:12px">
+          <label>🎁 Rodízio de prêmios (revezamento das 4 semanas)</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px">
+            <select id="camp-rodizio" style="flex:1;min-width:200px;background:var(--s3);border:1px solid var(--bdr);border-radius:var(--r3);color:var(--txt);font-family:'Sora',sans-serif;font-size:13px;padding:9px 12px">
+              <option value="">Selecione a semana do ciclo...</option>
+              <option value="1">Semana 1 — Mais views 🎥</option>
+              <option value="2">Semana 2 — Maior conversão 💰</option>
+              <option value="3">Semana 3 — Mais views 🎥</option>
+              <option value="4">Semana 4 — Maior conversão 💰</option>
+            </select>
+            <button type="button" class="btn btn-gold" onclick="aplicarRodizioPremio()">✨ Aplicar</button>
+          </div>
+          <div id="camp-rodizio-info" style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5">Preenche automaticamente a premiação e o critério da semana. Você ainda pode editar os campos antes de salvar.</div>
         </div>
         <div class="fi form-full">
           <label>Descrição da ação</label>
@@ -803,16 +826,27 @@ body{background:var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-hei
     </div>
     <div class="mb">
       <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5">
-        Cole abaixo o texto extraído do PDF de cupons da loja. O parser identifica linhas no formato:<br>
-        <code style="background:var(--s3);padding:2px 6px;border-radius:3px;font-size:11px">7387 07/04/2026 23 - HILLARY CUPOM50OFF R$ 80,82 R$ 66,13</code>
+        📎 Envie o <b>PDF de cupons da loja</b> (um por loja). O sistema lê o arquivo, <b>detecta a loja automaticamente</b> pelo cabeçalho e extrai cada venda. Você pode enviar vários PDFs em sequência.
       </div>
-      <div class="fi"><label>Loja</label>
-        <select id="imp-cup-loja"><option value="">Selecione a loja...</option></select>
+
+      <label for="imp-cup-file" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:2px dashed rgba(232,184,109,.4);border-radius:var(--r6);padding:22px;cursor:pointer;background:rgba(232,184,109,.05);text-align:center">
+        <div style="font-size:30px">📄</div>
+        <div style="font-size:13px;font-weight:700;color:var(--gold)">Clique para escolher o(s) PDF(s)</div>
+        <div style="font-size:11px;color:var(--muted)">ou arraste o arquivo aqui · aceita vários de uma vez</div>
+      </label>
+      <input type="file" id="imp-cup-file" accept="application/pdf" multiple style="display:none" onchange="onPdfCuponsSelecionado(this.files)">
+      <div id="imp-cup-file-status" style="margin-top:8px;font-size:12px;color:var(--muted2)"></div>
+
+      <div class="fi" style="margin-top:14px"><label>Loja (detectada automaticamente — confira/ajuste se preciso)</label>
+        <select id="imp-cup-loja" onchange="previewImportCupons()"><option value="">Selecione a loja...</option></select>
       </div>
-      <div class="fi" style="margin-top:10px"><label>Texto colado do PDF</label>
-        <textarea id="imp-cup-texto" style="width:100%;background:var(--s3);border:1px solid var(--bdr);border-radius:var(--r3);color:var(--txt);font-family:'Sora',sans-serif;font-size:12px;padding:10px;min-height:200px;resize:vertical" placeholder="Cole aqui o texto do PDF (vendas linha a linha)..."></textarea>
-      </div>
-      <div id="imp-cup-preview" style="margin-top:12px;font-size:11px;color:var(--muted2)"></div>
+      <details style="margin-top:10px">
+        <summary style="cursor:pointer;font-size:11px;color:var(--muted)">✏️ Ou colar o texto manualmente</summary>
+        <div class="fi" style="margin-top:8px"><label>Texto do PDF (linha a linha)</label>
+          <textarea id="imp-cup-texto" oninput="previewImportCupons()" style="width:100%;background:var(--s3);border:1px solid var(--bdr);border-radius:var(--r3);color:var(--txt);font-family:'Sora',sans-serif;font-size:12px;padding:10px;min-height:140px;resize:vertical" placeholder="16825 21/04/2026 3227 - KELISSON RIBAS ELO10OFF R$ 10,00 R$ 111,99"></textarea>
+        </div>
+      </details>
+      <div id="imp-cup-preview" style="margin-top:12px;font-size:12px;color:var(--muted2)"></div>
     </div>
     <div class="mf">
       <button class="btn btn-ghost" onclick="closeModal('modal-import-cupons')">Cancelar</button>
@@ -977,8 +1011,8 @@ const TABLE_MAP = {
   'Conteudos': {
     table: 'conteudos',
     pk: null,
-    fromRow: r => ({nome_influenciadora: r[0]||'', regiao: String(r[1]||'').toLowerCase(), plataforma: r[2]||'Instagram', link_post: r[3]||'', collab: r[4]||'', data_post: r[5]||null, observacoes: r[6]||'', lojas_collab: r[7]||[]}),
-    toLegacy: row => ({'Nome Influenciadora':row.nome_influenciadora,'Região':String(row.regiao||'').toUpperCase(),'Plataforma':row.plataforma,'Link do Post':row.link_post,'Collab':row.collab||'','Data Post':row.data_post||'','Observações':row.observacoes||'','Lojas Collab':row.lojas_collab||[]}),
+    fromRow: r => ({nome_influenciadora: r[0]||'', regiao: String(r[1]||'').toLowerCase(), plataforma: r[2]||'Instagram', link_post: r[3]||'', collab: r[4]||'', data_post: r[5]||null, observacoes: r[6]||'', lojas_collab: r[7]||[], campanha: r[8]||''}),
+    toLegacy: row => ({'Nome Influenciadora':row.nome_influenciadora,'Região':String(row.regiao||'').toUpperCase(),'Plataforma':row.plataforma,'Link do Post':row.link_post,'Collab':row.collab||'','Data Post':row.data_post||'','Observações':row.observacoes||'','Lojas Collab':row.lojas_collab||[],'Campanha':row.campanha||''}),
   },
   'Vendas': {
     table: 'vendas',
@@ -1233,6 +1267,7 @@ async function syncFromSheets() {
         plataforma: r['Plataforma']||'Instagram',
         link:       r['Link do Post']||'',
         collab:     r['Collab']||'',
+        campanha:   r['Campanha']||'',
         data:       (function(){
           const d = r['Data Post'];
           if(!d) return '';
@@ -2122,16 +2157,18 @@ function addConteudo(){
   const link=document.getElementById('cont-link').value.trim();
   const plat=document.getElementById('cont-plat').value;
   const collab=document.getElementById('cont-collab').value;
+  const campanha=document.getElementById('cont-campanha').value;
   const lojasMarcadas = [...document.querySelectorAll('.cont-loja-cb:checked')].map(cb=>cb.value);
   if(!nome||!link){showN('⚠️ Selecione seu nome e cole o link!');return;}
+  if(!campanha){showN('⚠️ Selecione de qual campanha é a postagem!');return;}
   if(!link.startsWith('http')){showN('⚠️ Link inválido. Deve começar com https://');return;}
   const inf=getInflu(nome);
   const regiao = inf?inf.regiao:'';
-  conteudos.push({nomeInflu:nome,regiao,plataforma:plat,link,collab,data:hoje(),lojasCollab:lojasMarcadas});
+  conteudos.push({nomeInflu:nome,regiao,plataforma:plat,link,collab,campanha,data:hoje(),lojasCollab:lojasMarcadas});
   if(collab&&inf){const idx=influ.indexOf(inf);if(idx>=0){influ[idx].collab=collab;}}
   saveAll();
-  // Grava no banco (lojas_collab vai como array)
-  writeToSheetAPI('Conteudos', [nome, regiao.toUpperCase(), plat, link, collab, hoje(), '', lojasMarcadas]);
+  // Grava no banco (lojas_collab vai como array, campanha no índice 8)
+  writeToSheetAPI('Conteudos', [nome, regiao.toUpperCase(), plat, link, collab, hoje(), '', lojasMarcadas, campanha]);
 
   // Regra:
   //  0 lojas → admin recebe registro do post (continua sabendo)
@@ -2182,11 +2219,39 @@ function filtrarConteudos(r,btn){
   renderConteudos();
 }
 
+// Popula os selects de campanha (formulário de envio + filtro), unindo a
+// campanha atual com as já usadas nas postagens
+function popularCampanhasSelects(){
+  const usadas = [...new Set(conteudos.map(c=>c.campanha).filter(Boolean))];
+  const atual = (_campanhaAtual && _campanhaAtual.titulo) ? String(_campanhaAtual.titulo).trim() : '';
+  const todas = [...new Set([atual, ...usadas].filter(Boolean))].sort();
+  // Select de envio: default = campanha atual
+  const sel=document.getElementById('cont-campanha');
+  if(sel){
+    const val=sel.value;
+    sel.innerHTML='<option value="">Selecione a campanha...</option>'+
+      todas.map(c=>`<option value="${c}">${c===atual?'🎯 '+c+' (atual)':c}</option>`).join('');
+    if(val && todas.includes(val)) sel.value=val;
+    else if(atual) sel.value=atual;
+  }
+  // Select de filtro
+  const filt=document.getElementById('cont-filtro-campanha');
+  if(filt){
+    const val=filt.value;
+    filt.innerHTML='<option value="">🎯 Todas as campanhas</option>'+
+      todas.map(c=>`<option value="${c}">${c}</option>`).join('');
+    if(val && todas.includes(val)) filt.value=val;
+  }
+}
+
 function renderConteudos(){
+  popularCampanhasSelects();
   const grid=document.getElementById('cont-grid');
   const filtro = String(filtroContAtual||'todos').toLowerCase();
+  const fCamp = (document.getElementById('cont-filtro-campanha')?.value||'').trim();
   let lista = filtro==='todos' ? conteudos : conteudos.filter(c => String(c.regiao||'').toLowerCase() === filtro);
-  if(!lista.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ic">📭</div><p>Nenhum conteúdo registrado ainda</p></div>';return;}
+  if(fCamp) lista = lista.filter(c => String(c.campanha||'')===fCamp);
+  if(!lista.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ic">📭</div><p>Nenhum conteúdo'+(fCamp?` na campanha "${fCamp}"`:'')+' registrado ainda</p></div>';return;}
   grid.innerHTML=[...lista].reverse().map(c=>`
     <div class="cont-card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
@@ -2194,6 +2259,7 @@ function renderConteudos(){
         <span style="font-size:18px">${c.plataforma==='TikTok'?'🎵':'📸'}</span>
       </div>
       <div class="cont-date">${formatData(c.data)} · ${c.plataforma}</div>
+      ${c.campanha?`<div style="margin:4px 0 2px"><span style="display:inline-block;font-size:10px;font-weight:700;letter-spacing:.5px;background:var(--rdim);color:var(--rl);border:1px solid rgba(200,16,46,.3);border-radius:2px;padding:2px 8px">🎯 ${c.campanha}</span></div>`:''}
       <a href="${c.link}" target="_blank" class="cont-link">${c.link}</a>
       <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
         <a href="${c.link}" target="_blank" class="btn btn-ghost btn-sm">↗ Abrir</a>
@@ -2458,58 +2524,204 @@ function exportarCuponsCSV(){
 
 function abrirImportCupons(){
   document.getElementById('imp-cup-texto').value='';
-  document.getElementById('imp-cup-preview').textContent='';
+  document.getElementById('imp-cup-preview').innerHTML='';
+  document.getElementById('imp-cup-file-status').innerHTML='';
+  const f = document.getElementById('imp-cup-file'); if(f) f.value='';
+  const sl = document.getElementById('imp-cup-loja'); if(sl) sl.value='';
+  _cupImportFila = [];
   document.getElementById('modal-import-cupons').classList.add('open');
 }
 
-async function processarImportCupons(){
-  const lojaId = document.getElementById('imp-cup-loja').value;
-  if(!lojaId){showN('⚠️ Selecione a loja');return;}
-  const txt = document.getElementById('imp-cup-texto').value;
-  if(!txt.trim()){showN('⚠️ Cole o texto do PDF');return;}
-  const loja = getLoja(lojaId);
-  // Regex para linhas tipo: "7387 07/04/2026 23 - HILLARY CUPOM50OFF R$ 80,82 R$ 66,13"
-  // Formato: VENDA DD/MM/YYYY CLIENTE_PARTES CUPOM R$ DESCONTO R$ LIQUIDO
-  const re = /^\s*(\d+)\s+(\d{2}\/\d{2}\/\d{4})\s+(.+?)\s+([A-Z0-9_-]{3,})\s+R\$\s*([\d.,]+)\s+R\$\s*([\d.,]+)\s*$/i;
-  const linhas = txt.split('\n');
-  const vendas = [];
-  const ignoradas = [];
-  for(const l of linhas){
-    const m = l.match(re);
-    if(!m) continue;
-    const [, , dataBR, cliente, cupom, desc, liq] = m;
-    const [d, mes, ano] = dataBR.split('/');
-    const dataISO = `${ano}-${mes}-${d}`;
-    const cupomUp = cupom.toUpperCase().trim();
-    // SÓ aceita cupons que estejam vinculados a uma influenciadora cadastrada
-    const infMatch = influ.find(i => String(i.cupom||'').toUpperCase().trim() === cupomUp);
-    if(!infMatch){ ignoradas.push(cupomUp); continue; }
-    vendas.push({
-      loja_id: lojaId,
-      loja_nome: loja?loja.n:'',
-      data_venda: dataISO,
-      cliente: cliente.trim().replace(/^\d+\s*-\s*/,''),
-      cupom: cupomUp,
-      desconto: parseFloat(desc.replace('.','').replace(',','.'))||0,
-      total_liquido: parseFloat(liq.replace('.','').replace(',','.'))||0,
-      semana: isoSemana(dataISO),
-      influenciadora: infMatch.nome,
+// ---------- Leitor de PDF (pdf.js carregado sob demanda) ----------
+let _pdfjsPromise = null;
+function carregarPdfJs(){
+  if(window.pdfjsLib) return Promise.resolve();
+  if(_pdfjsPromise) return _pdfjsPromise;
+  _pdfjsPromise = new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload=()=>{ try{ window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }catch(e){} resolve(); };
+    s.onerror=()=>reject(new Error('Não consegui carregar o leitor de PDF (precisa de internet).'));
+    document.head.appendChild(s);
+  });
+  return _pdfjsPromise;
+}
+
+// Extrai o texto do PDF reconstruindo as linhas pela posição (Y) e ordem (X)
+async function extrairTextoPdf(file){
+  await carregarPdfJs();
+  const buf = await file.arrayBuffer();
+  const pdf = await window.pdfjsLib.getDocument({data:buf}).promise;
+  const linhas=[];
+  for(let p=1;p<=pdf.numPages;p++){
+    const page=await pdf.getPage(p);
+    const tc=await page.getTextContent();
+    const byY={};
+    tc.items.forEach(it=>{
+      if(!it.str || !it.str.trim()) return;
+      const y=Math.round(it.transform[5]);
+      let bucket=Object.keys(byY).find(k=>Math.abs(k-y)<=3);
+      if(bucket===undefined) bucket=y;
+      (byY[bucket]=byY[bucket]||[]).push({x:it.transform[4],s:it.str});
+    });
+    Object.keys(byY).map(Number).sort((a,b)=>b-a).forEach(y=>{
+      const linha=byY[y].sort((a,b)=>a.x-b.x).map(o=>o.s).join(' ').replace(/\s+/g,' ').trim();
+      if(linha) linhas.push(linha);
     });
   }
-  if(!vendas.length){
-    if(ignoradas.length) showN(`⚠️ ${ignoradas.length} linha(s) ignorada(s): cupons genéricos (${[...new Set(ignoradas)].join(', ')})`);
-    else showN('⚠️ Nenhuma linha válida encontrada. Verifique o formato.');
+  return linhas.join('\n');
+}
+
+// Normaliza texto p/ comparação (sem acento, minúsculo, só letras/números)
+function _norm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim(); }
+
+// Detecta a loja a partir do cabeçalho do PDF ("S.A. CASA DO SUSHI XXXX" / "Municipio: XXXX")
+function detectarLojaDoTexto(texto){
+  const lojas=getAllLojas();
+  const alvos=[];
+  let m=texto.match(/casa do sushi[\s\-]+([a-zà-ú0-9 .'\-]{2,40})/i);
+  if(m) alvos.push(m[1]);
+  m=texto.match(/munic[ií]pio\s*:?\s*([a-zà-ú .'\-]{2,40})/i);
+  if(m) alvos.push(m[1]);
+  // Linha do topo costuma ser o nome inteiro da unidade
+  alvos.push(texto.split('\n')[0]||'');
+  const alvosN=alvos.map(_norm).filter(Boolean);
+  if(!alvosN.length) return null;
+  let best=null,bestScore=0;
+  lojas.forEach(l=>{
+    const ln=_norm(l.n);
+    if(!ln) return;
+    const tokens=ln.split(' ').filter(t=>t.length>=3);
+    alvosN.forEach(alvo=>{
+      let score=0;
+      if(alvo.includes(ln)) score=ln.length+5;           // nome inteiro contido = forte
+      else { tokens.forEach(t=>{ if(alvo.includes(t)) score+=t.length; }); }
+      if(score>bestScore){ bestScore=score; best=l; }
+    });
+  });
+  return bestScore>=3 ? best : null;
+}
+
+// Parser puro: texto -> {vendas, ignoradas} para uma loja
+function parseVendasCupom(texto, lojaId, lojaNome){
+  const re=/^\s*(\d+)\s+(\d{2}\/\d{2}\/\d{4})\s+(.+?)\s+([A-Z0-9_-]{3,})\s+R\$\s*([\d.,]+)\s+R\$\s*([\d.,]+)\s*$/i;
+  const vendas=[],ignoradas=[];
+  texto.split('\n').forEach(l=>{
+    const m=l.match(re);
+    if(!m) return;
+    const [, , dataBR, cliente, cupom, desc, liq]=m;
+    const [d,mes,ano]=dataBR.split('/');
+    const dataISO=`${ano}-${mes}-${d}`;
+    const cupomUp=cupom.toUpperCase().trim();
+    const infMatch=influ.find(i=>String(i.cupom||'').toUpperCase().trim()===cupomUp);
+    if(!infMatch){ ignoradas.push(cupomUp); return; }
+    vendas.push({
+      loja_id:lojaId, loja_nome:lojaNome||'',
+      data_venda:dataISO,
+      cliente:cliente.trim().replace(/^\d+\s*-\s*/,''),
+      cupom:cupomUp,
+      desconto:parseFloat(desc.replace(/\./g,'').replace(',','.'))||0,
+      total_liquido:parseFloat(liq.replace(/\./g,'').replace(',','.'))||0,
+      semana:isoSemana(dataISO),
+      influenciadora:infMatch.nome,
+    });
+  });
+  return {vendas, ignoradas};
+}
+
+// Fila de PDFs lidos aguardando confirmação de importação
+let _cupImportFila=[];
+
+// Disparado ao escolher arquivo(s) PDF
+async function onPdfCuponsSelecionado(files){
+  if(!files||!files.length) return;
+  const status=document.getElementById('imp-cup-file-status');
+  _cupImportFila=[];
+  status.innerHTML=`⏳ Lendo ${files.length} arquivo(s)...`;
+  for(const file of files){
+    try{
+      const texto=await extrairTextoPdf(file);
+      const loja=detectarLojaDoTexto(texto);
+      const lojaId=loja?loja.id:'';
+      const lojaNome=loja?loja.n:'';
+      const {vendas,ignoradas}=parseVendasCupom(texto, lojaId, lojaNome);
+      _cupImportFila.push({arquivo:file.name, lojaId, lojaNome, vendas, ignoradas, texto, detectada:!!loja});
+    }catch(e){
+      _cupImportFila.push({arquivo:file.name, erro:e.message||'falha na leitura', vendas:[], ignoradas:[]});
+    }
+  }
+  // Se só 1 PDF, também espelha no campo manual p/ revisão/ajuste de loja
+  if(_cupImportFila.length===1 && !_cupImportFila[0].erro){
+    const it=_cupImportFila[0];
+    const ta=document.getElementById('imp-cup-texto'); if(ta) ta.value=it.texto;
+    const sl=document.getElementById('imp-cup-loja'); if(sl && it.lojaId) sl.value=it.lojaId;
+  }
+  renderFilaImport();
+}
+
+function renderFilaImport(){
+  const status=document.getElementById('imp-cup-file-status');
+  if(!_cupImportFila.length){ status.innerHTML=''; return; }
+  status.innerHTML=_cupImportFila.map(it=>{
+    if(it.erro) return `<div style="color:var(--orange)">⚠️ <b>${it.arquivo}</b>: ${it.erro}</div>`;
+    const loja=it.detectada?`<b style="color:var(--green)">${it.lojaNome}</b>`:`<b style="color:var(--orange)">não detectada — selecione a loja abaixo</b>`;
+    const ig=it.ignoradas.length?` · ${it.ignoradas.length} ignorada(s) (cupom sem influ)`:'';
+    return `<div style="margin-bottom:4px">📄 <b>${it.arquivo}</b> → ${loja} · <b>${it.vendas.length}</b> venda(s)${ig}</div>`;
+  }).join('');
+  previewImportCupons();
+}
+
+// Atualiza o resumo do que será importado (modo manual / 1 arquivo)
+function previewImportCupons(){
+  const prev=document.getElementById('imp-cup-preview');
+  if(!prev) return;
+  // No modo fila com 2+ PDFs, o resumo fica no file-status
+  if(_cupImportFila.length>1){
+    const tot=_cupImportFila.reduce((s,i)=>s+i.vendas.length,0);
+    prev.innerHTML=`<b style="color:var(--gold)">${tot}</b> venda(s) no total, prontas pra importar. Clique em 📥 Importar.`;
     return;
   }
-  const obsIgnoradas = ignoradas.length ? ` · ${ignoradas.length} ignorada(s): ${[...new Set(ignoradas)].join(', ')}` : '';
-  showN(`💾 Importando ${vendas.length} vendas${obsIgnoradas}...`);
-  // Upsert no Supabase (em batch)
-  const r = await sbFetch('vendas_cupom?on_conflict=loja_id,data_venda,cliente,cupom,total_liquido', {
+  const lojaId=document.getElementById('imp-cup-loja').value;
+  const txt=document.getElementById('imp-cup-texto').value||'';
+  if(!txt.trim()){ prev.innerHTML=''; return; }
+  const loja=getLoja(lojaId);
+  const {vendas,ignoradas}=parseVendasCupom(txt, lojaId, loja?loja.n:'');
+  const ig=ignoradas.length?` · <span style="color:var(--orange)">${ignoradas.length} ignorada(s): ${[...new Set(ignoradas)].join(', ')}</span>`:'';
+  prev.innerHTML=`Detectadas <b style="color:var(--gold)">${vendas.length}</b> venda(s) com cupom de influenciadora${ig}${lojaId?'':' · <span style="color:var(--orange)">selecione a loja</span>'}`;
+}
+
+async function processarImportCupons(){
+  // Monta a lista final de vendas: fila de PDFs + (modo manual)
+  let vendas=[], ignoradas=[], semLoja=[];
+  if(_cupImportFila.length>1){
+    _cupImportFila.forEach(it=>{
+      if(it.erro) return;
+      if(!it.lojaId){ semLoja.push(it.arquivo); return; }
+      vendas.push(...it.vendas); ignoradas.push(...it.ignoradas);
+    });
+    if(semLoja.length){ showN(`⚠️ Loja não detectada em: ${semLoja.join(', ')}. Importe esse(s) PDF separadamente e escolha a loja.`); return; }
+  } else {
+    const lojaId=document.getElementById('imp-cup-loja').value;
+    const txt=document.getElementById('imp-cup-texto').value;
+    if(!txt.trim()){ showN('⚠️ Envie um PDF ou cole o texto'); return; }
+    if(!lojaId){ showN('⚠️ Selecione a loja'); return; }
+    const loja=getLoja(lojaId);
+    const r=parseVendasCupom(txt, lojaId, loja?loja.n:'');
+    vendas=r.vendas; ignoradas=r.ignoradas;
+  }
+  if(!vendas.length){
+    if(ignoradas.length) showN(`⚠️ ${ignoradas.length} linha(s) ignorada(s): cupons sem influenciadora (${[...new Set(ignoradas)].join(', ')})`);
+    else showN('⚠️ Nenhuma venda válida encontrada. Verifique o PDF/texto.');
+    return;
+  }
+  const obsIg=ignoradas.length?` · ${ignoradas.length} ignorada(s)`:'';
+  showN(`💾 Importando ${vendas.length} vendas${obsIg}...`);
+  const r=await sbFetch('vendas_cupom?on_conflict=loja_id,data_venda,cliente,cupom,total_liquido', {
     method:'POST',
     headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
     body: JSON.stringify(vendas)
   });
-  if(r === null){showN('⚠️ Falha ao gravar no banco');return;}
+  if(r===null){ showN('⚠️ Falha ao gravar no banco'); return; }
   showN(`✅ ${vendas.length} vendas importadas`);
   closeModal('modal-import-cupons');
   popularCupons();
@@ -3440,6 +3652,7 @@ async function carregarCampanha(){
   } catch(e){ _campanhaAtual = null; }
   renderBannerCampanha();
   preencherFormCampanha();
+  popularCampanhasSelects();
 }
 
 function renderBannerCampanha(){
@@ -3523,6 +3736,32 @@ function preencherFormCampanha(){
   if(st && c.atualizado_em){
     st.textContent = `✅ Última atualização: ${new Date(c.atualizado_em).toLocaleString('pt-BR')}`;
   }
+}
+
+// Rodízio de prêmios — revezamento das 4 semanas
+const RODIZIO_PREMIOS = {
+  '1': {tipo:'especial', emoji:'🎥', premiacao:'Review na loja mais próxima', criterio:'Ganha quem tiver MAIS VIEWS na semana', titulo:'Semana de Views'},
+  '2': {tipo:'bonus',    emoji:'💰', premiacao:'R$ 100,00 PIX',                 criterio:'Ganha quem tiver MAIOR CONVERSÃO do cupom na quinzena', titulo:'Semana de Conversão'},
+  '3': {tipo:'especial', emoji:'🎥', premiacao:'Review na loja mais próxima', criterio:'Ganha quem tiver MAIS VIEWS na semana', titulo:'Semana de Views'},
+  '4': {tipo:'bonus',    emoji:'💰', premiacao:'R$ 100,00 PIX',                 criterio:'Ganha quem tiver MAIOR CONVERSÃO do cupom na quinzena', titulo:'Semana de Conversão'},
+};
+function aplicarRodizioPremio(){
+  const sem=document.getElementById('camp-rodizio').value;
+  const p=RODIZIO_PREMIOS[sem];
+  if(!p){ showN('⚠️ Escolha a semana do ciclo'); return; }
+  const set=(id,v,soSeVazio)=>{ const e=document.getElementById(id); if(!e) return; if(soSeVazio && e.value.trim()) return; e.value=v; };
+  set('camp-tipo', p.tipo);
+  set('camp-emoji', p.emoji, true);
+  set('camp-premiacao', p.premiacao);
+  set('camp-titulo-in', p.titulo, true);
+  set('camp-subtitulo', p.criterio, true);
+  // Acrescenta o critério ao topo das regras, se ainda não estiver lá
+  const reg=document.getElementById('camp-regras');
+  if(reg && !reg.value.toUpperCase().includes(p.criterio.toUpperCase())){
+    reg.value = (p.criterio + (reg.value.trim()? '\n'+reg.value : '')).trim();
+  }
+  document.getElementById('camp-rodizio-info').innerHTML=`✅ Aplicado: <b style="color:var(--gold)">${p.emoji} ${p.premiacao}</b> — <span style="color:var(--txt)">${p.criterio}</span>. Revise e clique em 💾 Salvar e publicar.`;
+  showN('✨ Prêmio da semana preenchido');
 }
 
 async function salvarCampanha(){
